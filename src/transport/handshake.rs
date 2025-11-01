@@ -208,7 +208,7 @@ impl Initiator {
         let shared = x25519_diffie_hellman(&local_ephemeral, &remote_ephemeral)?;
         self.state.mix_key(shared.as_bytes());
 
-        let session_keys = derive_session_keys(&self.state, true);
+        let session_keys = derive_session_keys(&self.state);
 
         // Incorporate payload into a chaining key as confirmation data.
         let payload_clone = message.payload().to_vec();
@@ -241,11 +241,16 @@ pub struct Responder {
 }
 
 impl Responder {
-    /// Create a new responder with its static key.
+    /// Create a new responder with its static key and optional peer static key.
     #[must_use]
-    pub fn new(local_static: PrivateKey) -> Self {
+    pub fn new(local_static: PrivateKey, remote_static: Option<PublicKey>) -> Self {
+        let mut state = HandshakeState::new(local_static);
+        if let Some(peer) = remote_static {
+            state.set_remote_static(peer);
+        }
+
         Self {
-            state: HandshakeState::new(local_static),
+            state,
             stage: ResponderStage::Ready,
             anti_replay: AntiReplayStore::new(512, Duration::from_secs(60)),
             tickets: SessionTicketManager::new(Duration::from_secs(600), 1024),
@@ -313,7 +318,7 @@ impl Responder {
         let shared = x25519_diffie_hellman(&local_ephemeral, &remote_ephemeral)?;
         self.state.mix_key(shared.as_bytes());
 
-        let session_keys = derive_session_keys(&self.state, false);
+        let session_keys = derive_session_keys(&self.state);
 
         let payload_clone = message.payload().to_vec();
         self.state.mix_key(&payload_clone);
@@ -411,18 +416,15 @@ mod tests {
         PrivateKey::from_array(bytes)
     }
 
-    fn fixed_public(seed: u8) -> PublicKey {
-        fixed_private(seed).public_key()
-    }
-
     #[test]
     fn initiator_responder_handshake_roundtrip() {
         let initiator_static = fixed_private(0x10);
+        let initiator_public = initiator_static.public_key();
         let responder_static = fixed_private(0x40);
         let responder_public = responder_static.public_key();
 
         let mut initiator = Initiator::new(initiator_static.clone(), responder_public.clone());
-        let mut responder = Responder::new(responder_static);
+        let mut responder = Responder::new(responder_static, Some(initiator_public.clone()));
 
         let msg_init = initiator.initiate();
         let msg_resp = responder

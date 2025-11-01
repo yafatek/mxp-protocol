@@ -37,8 +37,8 @@ fn ordered<'a>(a: &'a [u8], b: &'a [u8]) -> (&'a [u8], &'a [u8]) {
 
 /// Combine several byte slices into a symmetric folded key material.
 pub fn symmetric_fold(
-    chaining_key: &[u8],
-    temp_key: &[u8],
+    _chaining_key: &[u8],
+    _temp_key: &[u8],
     local_static: &[u8],
     remote_static: &[u8],
     local_ephemeral: &[u8],
@@ -50,15 +50,11 @@ pub fn symmetric_fold(
     let (eph_a, eph_b) = ordered(local_ephemeral, remote_ephemeral);
 
     for idx in 0..out.len() {
-        let chain = chaining_key[idx % chaining_key.len()];
-        let tmp = temp_key[idx % temp_key.len()];
-        let stat = stat_a[idx % stat_a.len()] ^ stat_b[(idx * 3) % stat_b.len()];
-        let eph = eph_a[(idx * 5) % eph_a.len()] ^ eph_b[(idx * 7) % eph_b.len()];
+        let stat = stat_a[idx % stat_a.len()] ^ stat_b[idx % stat_b.len()];
+        let eph = eph_a[idx % eph_a.len()] ^ eph_b[idx % eph_b.len()];
+        let tweak = ((idx as u8).wrapping_mul(37)) ^ ((idx as u8).rotate_left(4));
 
-        out[idx] = chain
-            .wrapping_add(tmp.rotate_left(((idx & 7) + 1) as u32))
-            ^ stat
-            ^ eph.rotate_left(2);
+        out[idx] = (stat ^ eph ^ tweak).rotate_left(((idx & 7) + 1) as u32);
     }
 
     out

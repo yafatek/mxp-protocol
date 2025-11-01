@@ -322,7 +322,7 @@ impl SessionKeys {
 }
 
 /// Derive session keys based on the chaining key and temp key.
-pub fn derive_session_keys(state: &HandshakeState, initiator: bool) -> SessionKeys {
+pub fn derive_session_keys(state: &HandshakeState) -> SessionKeys {
     let chaining_key = *state.chaining_key();
     let temp_key = *state.temp_key();
     let local_static = *state.local_static().as_bytes();
@@ -348,20 +348,7 @@ pub fn derive_session_keys(state: &HandshakeState, initiator: bool) -> SessionKe
         &remote_eph,
     );
 
-    let mut send = [0u8; AEAD_KEY_LEN];
-    let mut receive = [0u8; AEAD_KEY_LEN];
-
-    for (idx, byte) in base.iter().enumerate() {
-        if initiator {
-            send[idx] = *byte;
-            receive[idx] = byte.rotate_left(1) ^ 0xA5;
-        } else {
-            send[idx] = byte.rotate_left(1) ^ 0xA5;
-            receive[idx] = *byte;
-        }
-    }
-
-    SessionKeys::new(AeadKey::from_array(send), AeadKey::from_array(receive))
+    SessionKeys::new(AeadKey::from_array(base), AeadKey::from_array(base))
 }
 
 /// Encrypt payload with the session key (placeholder implementation).
