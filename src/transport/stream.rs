@@ -116,7 +116,7 @@ pub enum StreamError {
         /// Offset at which conflicting bytes were observed.
         offset: u64,
     },
-    /// Stream not present in the manager.
+    /// Stream doesn't present in the manager.
     #[error("unknown stream id")]
     UnknownStream,
 }

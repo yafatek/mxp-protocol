@@ -4,6 +4,7 @@ use std::convert::TryInto;
 use std::fmt;
 
 use super::ack::{AckError, AckFrame};
+use super::stream::StreamId;
 
 /// Size of an encoded packet header in bytes.
 pub const HEADER_SIZE: usize = 32;
@@ -222,6 +223,10 @@ pub enum FrameType {
     Crypto,
     /// Control messages (window updates, migration tokens, etc.).
     Control,
+    /// Stream flow-control credit (per-stream MAX_DATA equivalent).
+    StreamMaxData,
+    /// Connection-level flow-control credit.
+    ConnectionMaxData,
 }
 
 /// Transport frame abstraction.
@@ -248,6 +253,22 @@ impl Frame {
         Self::new(FrameType::Ack, payload)
     }
 
+    /// Create a stream control frame carrying flow-control credits.
+    pub fn stream_max_data(stream: StreamId, new_limit: u64) -> Self {
+        let mut payload = Vec::with_capacity(8 + 8);
+        payload.extend_from_slice(&stream.as_u64().to_le_bytes());
+        payload.extend_from_slice(&new_limit.to_le_bytes());
+        Self::new(FrameType::StreamMaxData, payload)
+    }
+
+    /// Create a connection-level MAX_DATA frame.
+    pub fn connection_max_data(new_limit: u64) -> Self {
+        Self::new(
+            FrameType::ConnectionMaxData,
+            new_limit.to_le_bytes().to_vec(),
+        )
+    }
+
     /// Frame type accessor.
     #[must_use]
     pub const fn frame_type(&self) -> FrameType {
@@ -272,5 +293,29 @@ impl Frame {
             return Err(AckError::UnexpectedFrameType);
         }
         AckFrame::decode(&self.payload)
+    }
+
+    /// Decode a stream MAX_DATA frame payload.
+    pub fn decode_stream_max_data(&self) -> Result<(StreamId, u64), AckError> {
+        if self.frame_type != FrameType::StreamMaxData {
+            return Err(AckError::UnexpectedFrameType);
+        }
+        if self.payload.len() != 16 {
+            return Err(AckError::UnexpectedFrameType);
+        }
+        let stream = StreamId::from_raw(u64::from_le_bytes(self.payload[0..8].try_into().unwrap()));
+        let limit = u64::from_le_bytes(self.payload[8..16].try_into().unwrap());
+        Ok((stream, limit))
+    }
+
+    /// Decode a connection MAX_DATA frame payload.
+    pub fn decode_connection_max_data(&self) -> Result<u64, AckError> {
+        if self.frame_type != FrameType::ConnectionMaxData {
+            return Err(AckError::UnexpectedFrameType);
+        }
+        if self.payload.len() != 8 {
+            return Err(AckError::UnexpectedFrameType);
+        }
+        Ok(u64::from_le_bytes(self.payload[0..8].try_into().unwrap()))
     }
 }

@@ -12,6 +12,7 @@ mod handshake;
 mod loss;
 mod packet;
 mod packet_crypto;
+mod scheduler;
 mod session;
 mod socket;
 mod stream;
@@ -42,6 +43,7 @@ pub use handshake::{
 pub use loss::{AckOutcome, LossConfig, LossManager, SentPacketInfo};
 pub use packet::{Frame, FrameType, HEADER_SIZE, PacketFlags, PacketHeader};
 pub use packet_crypto::{DecryptedPacket, PacketCipher};
+pub use scheduler::{PriorityClass, Scheduler};
 pub use session::{SessionTicket, SessionTicketManager, TICKET_ID_LEN, TICKET_SECRET_LEN};
 pub use socket::{SocketBinding, SocketError};
 pub use stream::{
