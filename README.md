@@ -8,7 +8,7 @@
 
 ## Overview
 
-MXP (Mesh eXchange Protocol) is an open, high-performance binary protocol designed specifically for agent-to-agent communication in distributed systems. Built on QUIC (RFC 9000), MXP provides zero-round-trip-time connections, built-in observability, and native streaming support optimized for AI agent workloads.
+MXP (Mesh eXchange Protocol) is an open, high-performance binary protocol designed specifically for agent-to-agent communication in distributed systems. MXP ships with a bespoke transport stack (currently using UDP as the carrier) that provides zero-round-trip-time connection patterns, built-in observability, and native streaming support optimized for AI agent workloads.
 
 ### Key Features
 
@@ -17,7 +17,7 @@ MXP (Mesh eXchange Protocol) is an open, high-performance binary protocol design
 - **Native Streaming** - First-class support for streaming data (e.g., LLM token streams)
 - **Binary Wire Format** - Efficient 32-byte headers with zero-copy deserialization
 - **Sub-millisecond Latency** - Optimized for datacenter and cross-region communication
-- **QUIC Transport** - Leverages modern transport with multiplexing and congestion control
+- **MXP Transport** - Custom reliability, security, and scheduling tuned for agents
 
 ## Protocol Specification
 
@@ -30,7 +30,7 @@ See [SPEC.md](SPEC.md) for the complete wire format specification.
 | Magic Number | `0x4D585031` ("MXP1") |
 | Header Size | 32 bytes (cache-aligned) |
 | Checksum Algorithm | XXHash3 (64-bit) |
-| Transport Protocol | QUIC (RFC 9000) over UDP |
+| Transport Protocol | MXP custom transport (UDP carrier) |
 | Default Port | 9000 |
 | Maximum Payload | 16 MB |
 | Endianness | Little-endian |
@@ -80,23 +80,22 @@ let message = Message::new(MessageType::Call, b"request_data");
 let bytes = message.encode();
 
 // Decode from bytes
-let decoded = Message::decode(&bytes)?;
+let decoded = Message::decode(bytes.clone())?;
 ```
 
 ### Client-Server Communication
 
 ```rust
-use mxp::{Endpoint, Message, MessageType};
+use mxp::{Message, MessageType, Transport, TransportConfig};
+use std::net::SocketAddr;
 
-// Client
-let endpoint = Endpoint::client("127.0.0.1:0".parse()?)?;
-let conn = endpoint.connect("127.0.0.1:9000".parse()?, "server").await?;
+let config = TransportConfig::default();
+let transport = Transport::new(config);
+let handle = transport.bind("127.0.0.1:0".parse::<SocketAddr>()?)?;
 
-let request = Message::new(MessageType::Call, b"ping");
-conn.send(&request).await?;
-
-let response = conn.recv().await?.unwrap();
-println!("Response: {:?}", response.payload());
+let mut buffer = handle.acquire_buffer();
+let _ = handle.receive(&mut buffer)?;
+println!("Received {} bytes", buffer.as_slice().len());
 ```
 
 See [examples/](examples/) for complete examples.
@@ -109,7 +108,7 @@ See [examples/](examples/) for complete examples.
 |-----------|--------|
 | Message encode | < 1 μs |
 | Message decode | < 1 μs |
-| QUIC send/receive | < 100 μs |
+| Transport send/receive | < 100 μs |
 | P99 latency (same datacenter) | < 1 ms |
 | P99 latency (cross-region) | < 50 ms |
 
@@ -125,7 +124,7 @@ See [examples/](examples/) for complete examples.
 2. **Observable by Default** - Built-in tracing without external instrumentation
 3. **Simple Implementation** - Clear specification, easy to implement correctly
 4. **Forward Compatible** - Reserved fields and extension points for future versions
-5. **Transport Agnostic** - While QUIC is recommended, protocol works over any reliable transport
+5. **Transport Abstraction** - MXP transport runs over UDP today and is designed to support additional carriers
 
 ## Architecture
 
@@ -143,10 +142,10 @@ See [examples/](examples/) for complete examples.
 └─────────────────────────────────────────┘
                   ↓
 ┌─────────────────────────────────────────┐
-│         QUIC Transport Layer            │
-│  ├── 0-RTT connection establishment     │
-│  ├── Stream multiplexing                │
-│  └── TLS 1.3 encryption                 │
+│         MXP Transport Layer             │
+│  ├── Noise-based handshake              │
+│  ├── Reliable streams + datagrams       │
+│  └── Priority scheduling & security     │
 └─────────────────────────────────────────┘
                   ↓
 ┌─────────────────────────────────────────┐
@@ -161,7 +160,7 @@ See [examples/](examples/) for complete examples.
 This repository provides the reference implementation with:
 - Complete protocol support
 - Zero-copy message encoding/decoding
-- QUIC transport via Quinn
+- MXP transport skeleton (UDP carrier)
 - Comprehensive test coverage
 - Performance benchmarks
 
@@ -192,15 +191,15 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ### vs gRPC
 
-- **Transport**: QUIC vs HTTP/2 over TCP
+- **Transport**: MXP custom transport vs HTTP/2 over TCP
 - **Agent Discovery**: Built into protocol vs requires external service mesh
 - **Tracing**: Mandatory trace IDs vs optional metadata
 - **Binary Format**: Custom optimized vs Protocol Buffers
 
 ## Security Considerations
 
-- TLS 1.3 encryption mandatory (via QUIC)
-- Certificate-based authentication
+- Noise IK handshake with mutual authentication (in progress)
+- AEAD encryption mandated for all transport payloads
 - Optional end-to-end payload encryption
 - Rate limiting and quota enforcement at application layer
 

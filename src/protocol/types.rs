@@ -96,6 +96,8 @@ impl fmt::Display for MessageType {
 pub struct Flags(u8);
 
 impl Flags {
+    /// Valid flag bits mask
+    pub const VALID_MASK: u8 = Self::COMPRESSED | Self::ENCRYPTED | Self::REQUIRES_ACK | Self::FINAL;
     /// Payload is compressed (zstd)
     pub const COMPRESSED: u8 = 1 << 0;
     /// Payload is encrypted (E2E)
@@ -113,8 +115,12 @@ impl Flags {
 
     /// Create from byte
     #[must_use]
-    pub const fn from_u8(value: u8) -> Self {
-        Self(value & 0x0F) // Only lower 4 bits
+    pub const fn from_u8(value: u8) -> Option<Self> {
+        if value & !Self::VALID_MASK == 0 {
+            Some(Self(value))
+        } else {
+            None
+        }
     }
 
     /// Convert to byte
@@ -126,6 +132,7 @@ impl Flags {
     /// Set a flag
     #[must_use]
     pub const fn with(mut self, flag: u8) -> Self {
+        debug_assert!(flag & !Self::VALID_MASK == 0, "invalid flag bit");
         self.0 |= flag;
         self
     }

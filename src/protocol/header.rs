@@ -29,6 +29,7 @@ use super::{Flags, MAGIC_NUMBER, MessageType};
 /// |                                                               |
 /// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 /// ```
+#[repr(C, align(32))]
 #[derive(Debug, Clone, Copy)]
 pub struct MessageHeader {
     magic: u32,
@@ -82,7 +83,7 @@ impl MessageHeader {
     /// Get flags
     #[must_use]
     pub fn flags(&self) -> Flags {
-        Flags::from_u8(self.flags)
+        Flags::from_u8(self.flags).expect("flags validated during parsing")
     }
 
     /// Set flags
@@ -115,6 +116,14 @@ impl MessageHeader {
             return Err(super::Error::InvalidMagic { found: self.magic });
         }
 
+        // Check reserved bits
+        if self.reserved != 0 {
+            return Err(super::Error::ReservedFieldNonZero {
+                field: "header.reserved",
+                value: u64::from(self.reserved),
+            });
+        }
+
         // Check message type
         if self.message_type().is_none() {
             return Err(super::Error::InvalidMessageType {
@@ -122,11 +131,16 @@ impl MessageHeader {
             });
         }
 
+        // Validate flags
+        if Flags::from_u8(self.flags).is_none() {
+            return Err(super::Error::InvalidFlags { flags: self.flags });
+        }
+
         // Check payload size
-        let payload_size = usize::try_from(self.payload_len).unwrap_or(usize::MAX);
-        if payload_size > super::MAX_PAYLOAD_SIZE {
+        let payload_len = self.payload_len;
+        if payload_len > super::MAX_PAYLOAD_SIZE as u64 {
             return Err(super::Error::PayloadTooLarge {
-                size: payload_size,
+                size: payload_len as usize,
                 max: super::MAX_PAYLOAD_SIZE,
             });
         }

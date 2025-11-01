@@ -46,16 +46,32 @@ pub enum Error {
         got: usize,
     },
 
+    /// Reserved bits must be zero
+    #[error("reserved field {field} must be zero (found {value})")]
+    ReservedFieldNonZero {
+        /// Field name
+        field: &'static str,
+        /// Actual value
+        value: u64,
+    },
+
+    /// Invalid flags value
+    #[error("invalid flags value: {flags:#010b}")]
+    InvalidFlags {
+        /// Flags byte
+        flags: u8,
+    },
+
     /// IO error
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 
-    /// QUIC connection error
-    #[error("QUIC connection error: {0}")]
+    /// Transport connection error
+    #[error("transport connection error: {0}")]
     Connection(String),
 
-    /// QUIC stream error
-    #[error("QUIC stream error: {0}")]
+    /// Transport stream error
+    #[error("transport stream error: {0}")]
     Stream(String),
 
     /// Invalid UTF-8

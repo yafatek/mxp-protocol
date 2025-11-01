@@ -62,12 +62,14 @@ pub fn encode(message: &Message) -> Vec<u8> {
 /// - Message type is unknown
 /// - Checksum doesn't match
 /// - Payload is too large
-pub fn decode(bytes: &[u8]) -> Result<Message> {
+pub fn decode(bytes: Bytes) -> Result<Message> {
+    let total_available = bytes.len();
+
     // Check minimum size
-    if bytes.len() < MIN_MESSAGE_SIZE {
+    if total_available < MIN_MESSAGE_SIZE {
         return Err(Error::BufferTooSmall {
             needed: MIN_MESSAGE_SIZE,
-            got: bytes.len(),
+            got: total_available,
         });
     }
 
@@ -75,27 +77,23 @@ pub fn decode(bytes: &[u8]) -> Result<Message> {
     let header = MessageHeader::from_bytes(&bytes[0..HEADER_SIZE])?;
 
     // Calculate expected total size
-    #[allow(clippy::cast_possible_truncation)]
-    let payload_len = header.payload_len().min(super::MAX_PAYLOAD_SIZE as u64) as usize;
+    let payload_len = header.payload_len() as usize;
     let total_size = HEADER_SIZE + payload_len + CHECKSUM_SIZE;
 
-    if bytes.len() < total_size {
+    if total_available < total_size {
         return Err(Error::BufferTooSmall {
             needed: total_size,
-            got: bytes.len(),
+            got: total_available,
         });
     }
 
     // Extract payload
-    let payload = Bytes::copy_from_slice(&bytes[HEADER_SIZE..HEADER_SIZE + payload_len]);
+    let payload = bytes.slice(HEADER_SIZE..HEADER_SIZE + payload_len);
 
     // Extract checksum
     let checksum_offset = HEADER_SIZE + payload_len;
-    let stored_checksum = u64::from_le_bytes(
-        bytes[checksum_offset..checksum_offset + 8]
-            .try_into()
-            .unwrap(),
-    );
+    let checksum_slice = &bytes[checksum_offset..checksum_offset + CHECKSUM_SIZE];
+    let stored_checksum = u64::from_le_bytes(checksum_slice.try_into().unwrap());
 
     // Verify checksum
     let calculated_checksum = xxh3_64(&bytes[0..checksum_offset]);
@@ -108,26 +106,20 @@ pub fn decode(bytes: &[u8]) -> Result<Message> {
     }
 
     // Create message
-    let message = Message::with_ids(
-        header.message_type().unwrap(),
-        header.message_id(),
-        header.trace_id(),
-        payload,
-    );
-
-    Ok(message)
+    Ok(Message::from_parts(header, payload))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bytes::Bytes;
     use crate::MessageType;
 
     #[test]
     fn test_encode_decode_roundtrip() {
         let original = Message::new(MessageType::Call, b"test payload");
         let encoded = encode(&original);
-        let decoded = decode(&encoded).unwrap();
+        let decoded = decode(Bytes::from(encoded)).unwrap();
 
         assert_eq!(decoded.message_type(), original.message_type());
         assert_eq!(decoded.payload().as_ref(), original.payload().as_ref());
@@ -140,7 +132,7 @@ mod tests {
         let mut bytes = vec![0u8; MIN_MESSAGE_SIZE];
         bytes[0..4].copy_from_slice(&0xDEAD_BEEF_u32.to_le_bytes());
 
-        let result = decode(&bytes);
+        let result = decode(Bytes::from(bytes));
         assert!(matches!(result, Err(Error::InvalidMagic { .. })));
     }
 
@@ -153,14 +145,14 @@ mod tests {
         let len = encoded.len();
         encoded[len - 1] ^= 0xFF;
 
-        let result = decode(&encoded);
+        let result = decode(Bytes::from(encoded));
         assert!(matches!(result, Err(Error::ChecksumMismatch { .. })));
     }
 
     #[test]
     fn test_decode_buffer_too_small() {
         let bytes = vec![0u8; 10]; // Too small
-        let result = decode(&bytes);
+        let result = decode(Bytes::from(bytes));
         assert!(matches!(result, Err(Error::BufferTooSmall { .. })));
     }
 
@@ -189,10 +181,11 @@ mod tests {
 
         let message = Message::new(MessageType::Call, vec![0u8; 1024]);
         let encoded = encode(&message);
+        let encoded_bytes = Bytes::from(encoded);
 
         let start = Instant::now();
         for _ in 0..1000 {
-            let _ = decode(&encoded).unwrap();
+            let _ = decode(encoded_bytes.clone()).unwrap();
         }
         let elapsed = start.elapsed();
 

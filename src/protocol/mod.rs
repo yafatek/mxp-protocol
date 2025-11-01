@@ -6,12 +6,14 @@ mod codec;
 mod error;
 mod header;
 mod message;
+pub(crate) mod metrics;
 mod types;
 
 pub use codec::{decode, encode};
 pub use error::{Error, Result};
 pub use header::MessageHeader;
 pub use message::Message;
+pub(crate) use metrics::{LatencyKind, Metrics, MetricsSnapshot};
 pub use types::{Flags, MessageType};
 
 /// MXP magic number: "MXP1" in ASCII

@@ -2,8 +2,7 @@
 
 use mxp::{Message, MessageType};
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("MXP Ping-Pong Example");
     println!("====================\n");
 
@@ -23,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Encoded to {} bytes", encoded.len());
 
     // Decode
-    let decoded = Message::decode(&encoded)?;
+    let decoded = Message::decode(encoded.clone())?;
     println!(
         "Decoded: payload={:?}",
         std::str::from_utf8(decoded.payload()).unwrap()

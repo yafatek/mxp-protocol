@@ -1,7 +1,7 @@
 //! MXP (Mesh eXchange Protocol) - High-performance protocol for agent-to-agent communication
 //!
 //! This library provides a reference implementation of the MXP protocol specification.
-//! It includes zero-copy encoding/decoding, QUIC transport, and built-in observability.
+//! It includes zero-copy encoding/decoding, a bespoke transport stack, and built-in observability.
 //!
 //! # Quick Start
 //!
@@ -15,7 +15,7 @@
 //! let bytes = msg.encode();
 //!
 //! // Decode from bytes
-//! let decoded = Message::decode(&bytes)?;
+//! let decoded = Message::decode(bytes.clone())?;
 //! # Ok::<(), mxp::Error>(())
 //! ```
 //!
@@ -24,7 +24,7 @@
 //! - **Zero-copy encoding/decoding** - Direct memory mapping for performance
 //! - **Type-safe message types** - Rust enums for protocol messages
 //! - **Built-in checksums** - `XXHash3` for fast validation
-//! - **QUIC transport** - 0-RTT connections via Quinn
+//! - **Custom transport** - UDP carrier with MXP-native reliability and security
 //!
 //! # Protocol Specification
 //!
@@ -43,7 +43,7 @@ pub mod transport;
 pub use protocol::{
     Error, Flags, MAGIC_NUMBER, MAX_PAYLOAD_SIZE, Message, MessageHeader, MessageType, Result,
 };
-pub use transport::{Connection, Endpoint};
+pub use transport::{BufferPool, Transport, TransportConfig, TransportHandle};
 
 /// MXP protocol version
 pub const VERSION: &str = "1.0.0-draft";

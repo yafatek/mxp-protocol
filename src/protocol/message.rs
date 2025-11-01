@@ -26,6 +26,12 @@ impl Message {
         Self { header, payload }
     }
 
+    /// Create a message from raw parts without copying payload bytes
+    pub(super) fn from_parts(header: MessageHeader, payload: Bytes) -> Self {
+        debug_assert_eq!(header.payload_len(), payload.len() as u64);
+        Self { header, payload }
+    }
+
     /// Create a new message with explicit IDs
     pub fn with_ids(
         msg_type: MessageType,
@@ -101,8 +107,11 @@ impl Message {
     }
 
     /// Decode message from bytes
-    pub fn decode(bytes: &[u8]) -> super::Result<Self> {
-        super::decode(bytes)
+    pub fn decode<B>(bytes: B) -> super::Result<Self>
+    where
+        B: Into<Bytes>,
+    {
+        super::decode(bytes.into())
     }
 }
 
@@ -123,7 +132,7 @@ mod tests {
     fn test_message_roundtrip() {
         let original = Message::new(MessageType::Event, b"hello world");
         let encoded = original.encode();
-        let decoded = Message::decode(&encoded).unwrap();
+        let decoded = Message::decode(encoded).unwrap();
 
         assert_eq!(decoded.message_type(), original.message_type());
         assert_eq!(decoded.payload().as_ref(), original.payload().as_ref());
