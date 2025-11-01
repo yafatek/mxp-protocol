@@ -53,7 +53,13 @@ See [SPEC.md](SPEC.md) for the complete wire format specification.
 
 ## Installation
 
-Add to your `Cargo.toml`:
+Run the following Cargo command in your project directory:
+
+```bash
+cargo add mxp
+```
+
+Or add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
