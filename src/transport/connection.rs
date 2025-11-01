@@ -164,6 +164,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore] // Requires network, run manually with: cargo test -- --ignored
     async fn test_send_recv() {
         let (client, server) = setup_test_connection().await.unwrap();
 
@@ -180,6 +181,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore] // Requires network, run manually with: cargo test -- --ignored
     async fn test_call_response() {
         let (client, server) = setup_test_connection().await.unwrap();
 
