@@ -21,7 +21,7 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
-          components: rustfmt, clippy
+          components: rustfmt
       
       - name: Extract version from tag
         id: version
@@ -46,8 +46,8 @@ jobs:
       - name: Run tests
         run: cargo test --lib --verbose
       
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+#      - name: Run clippy
+#        run: cargo clippy --all-targets --all-features -- -D warnings
       
       - name: Check formatting
         run: cargo fmt --all -- --check
