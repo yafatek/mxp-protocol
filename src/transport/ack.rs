@@ -116,8 +116,8 @@ impl AckFrame {
                 end: ranges[0].end(),
             });
         }
-        let ack_delay_micros = u64::try_from(ack_delay.as_micros().min(u128::from(u64::MAX)))
-            .unwrap_or(u64::MAX);
+        let ack_delay_micros =
+            u64::try_from(ack_delay.as_micros().min(u128::from(u64::MAX))).unwrap_or(u64::MAX);
         Ok(Self {
             largest,
             ack_delay_micros,

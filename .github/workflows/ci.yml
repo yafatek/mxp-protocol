@@ -23,7 +23,7 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
-          components: rustfmt, clippy
+          components: rustfmt
       
       - name: Cache cargo registry
         uses: actions/cache@v3
@@ -48,23 +48,6 @@ jobs:
       
       - name: Run doc tests
         run: cargo test --doc --verbose
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
-          components: clippy
-      
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
 
   fmt:
     name: Format

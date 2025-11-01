@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     fn budget_accounts_for_initial_allowance() {
-        let mut config = AmplificationConfig {
+        let config = AmplificationConfig {
             initial_allowance: 0,
             ..Default::default()
         };

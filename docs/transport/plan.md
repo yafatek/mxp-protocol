@@ -65,6 +65,7 @@ All crates live under `mxp-protocol/transport/` with internal dependencies only.
 - [ ] Beta deployment to internal clusters; monitor telemetry for 14 days *(checklist documented in `docs/transport/beta-checklist.md`).*
 - [ ] Customer pilot (limited partners) with fallback plan *(see beta checklist for comms template).* 
 - [ ] Decision gate for enabling custom transport by default.
+- [ ] Restore clippy pedantic enforcement *(temporarily disabled in CI for release; track cleanup post-GA).* 
 
 ## 4. Testing Alignment
 

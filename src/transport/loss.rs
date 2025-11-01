@@ -419,7 +419,7 @@ mod tests {
 
     #[test]
     fn packet_threshold_declares_loss() {
-        let mut config = LossConfig {
+        let config = LossConfig {
             packet_threshold: 2,
             ..Default::default()
         };
@@ -442,7 +442,7 @@ mod tests {
 
     #[test]
     fn time_threshold_declares_loss() {
-        let mut config = LossConfig {
+        let config = LossConfig {
             initial_rtt: Duration::from_millis(5),
             ..Default::default()
         };

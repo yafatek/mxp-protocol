@@ -76,6 +76,7 @@ Deliver a bespoke transport layer tailored for MXP agent communication that:
 - Phase 5 initiated: `examples/perf_baseline.rs` provides initial encode/decode/stream/scheduler metrics; full benchmarking against targets pending.
 - Runbook drafted (`docs/transport/runbook.md`) with operational checklist, monitoring signals, and incident workflow.
 - Beta rollout checklist documented (`docs/transport/beta-checklist.md`) covering canary thresholds, rollback, and communication plan.
+- Clippy pedantic warnings deferred post-release; CI clippy gate temporarily disabled pending cleanup.
 
 ## 9. Risks & Mitigations
 - **Performance shortfall:** Build perf harness early; optimize buffer management and schedulers.

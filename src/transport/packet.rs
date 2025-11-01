@@ -11,12 +11,11 @@ pub const HEADER_SIZE: usize = 32;
 
 // Size of the AEAD authentication tag in bytes.
 // pub const AUTH_TAG_SIZE: usize = 16;
-
 /// Size of the nonce carried in the header (12 bytes for ChaCha20/AES).
 pub const NONCE_SIZE: usize = 12;
 
 /// Flags describing packet semantics.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct PacketFlags(u8);
 
 impl PacketFlags {
@@ -57,12 +56,6 @@ impl PacketFlags {
     /// Clear a flag from the set.
     pub fn remove(&mut self, flag: u8) {
         self.0 &= !flag;
-    }
-}
-
-impl Default for PacketFlags {
-    fn default() -> Self {
-        Self(0)
     }
 }
 
@@ -223,9 +216,9 @@ pub enum FrameType {
     Crypto,
     /// Control messages (window updates, migration tokens, etc.).
     Control,
-    /// Stream flow-control credit (per-stream MAX_DATA equivalent).
+    /// Stream flow-control credit (per-stream `MAX_DATA` equivalent).
     StreamMaxData,
-    /// Connection-level flow-control credit.
+    /// Connection-level `MAX_DATA` credit.
     ConnectionMaxData,
 }
 
@@ -295,7 +288,7 @@ impl Frame {
         AckFrame::decode(&self.payload)
     }
 
-    /// Decode a stream MAX_DATA frame payload.
+    /// Decode a stream `MAX_DATA` frame payload.
     pub fn decode_stream_max_data(&self) -> Result<(StreamId, u64), AckError> {
         if self.frame_type != FrameType::StreamMaxData {
             return Err(AckError::UnexpectedFrameType);
@@ -308,7 +301,7 @@ impl Frame {
         Ok((stream, limit))
     }
 
-    /// Decode a connection MAX_DATA frame payload.
+    /// Decode a connection `MAX_DATA` frame payload.
     pub fn decode_connection_max_data(&self) -> Result<u64, AckError> {
         if self.frame_type != FrameType::ConnectionMaxData {
             return Err(AckError::UnexpectedFrameType);

@@ -1,5 +1,3 @@
-#![cfg(feature = "debug-tools")]
-
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::Path;
@@ -8,13 +6,13 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Thread-safe wrapper around a PCAP writer.
 #[derive(Clone)]
-pub(crate) struct PcapRecorder {
+pub struct PcapRecorder {
     inner: Arc<Mutex<PcapWriter>>,
 }
 
 impl PcapRecorder {
     /// Create a recorder that writes to the provided path, truncating any existing file.
-    pub(crate) fn create(path: &Path) -> io::Result<Self> {
+    pub fn create(path: &Path) -> io::Result<Self> {
         let writer = PcapWriter::new(path)?;
         Ok(Self {
             inner: Arc::new(Mutex::new(writer)),
@@ -22,7 +20,7 @@ impl PcapRecorder {
     }
 
     /// Record a packet with the current system timestamp.
-    pub(crate) fn record(&self, packet: &[u8]) -> io::Result<()> {
+    pub fn record(&self, packet: &[u8]) -> io::Result<()> {
         let timestamp = SystemTime::now();
         let mut guard = self
             .inner
@@ -65,7 +63,7 @@ impl PcapWriter {
     }
 }
 
-const PCAP_MAGIC: u32 = 0xa1b2c3d4;
+const PCAP_MAGIC: u32 = 0xa1b2_c3d4;
 const PCAP_VERSION_MAJOR: u16 = 2;
 const PCAP_VERSION_MINOR: u16 = 4;
 const PCAP_THISZONE: i32 = 0;
