@@ -134,16 +134,17 @@ impl Connection {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{MessageType, transport::Endpoint};
+    use crate::{transport::Endpoint, MessageType};
 
     async fn setup_test_connection() -> Result<(Connection, Connection)> {
         // Install crypto provider for tests
         let _ = rustls::crypto::ring::default_provider().install_default();
-        
+
         // Generate self-signed certificate for testing
         let cert = rcgen::generate_simple_self_signed(vec!["localhost".to_string()]).unwrap();
         let cert_der = cert.cert.der().clone();
-        let key_der = rustls::pki_types::PrivateKeyDer::try_from(cert.signing_key.serialize_der()).unwrap();
+        let key_der =
+            rustls::pki_types::PrivateKeyDer::try_from(cert.signing_key.serialize_der()).unwrap();
 
         // Create server
         let server_addr: std::net::SocketAddr = "127.0.0.1:0".parse().unwrap();
@@ -164,7 +165,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore] // Requires network, run manually with: cargo test -- --ignored
+    #[ignore = "Requires network setup, run manually with: cargo test -- --ignored"]
     async fn test_send_recv() {
         let (client, server) = setup_test_connection().await.unwrap();
 
@@ -181,7 +182,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore] // Requires network, run manually with: cargo test -- --ignored
+    #[ignore = "Requires network setup, run manually with: cargo test -- --ignored"]
     async fn test_call_response() {
         let (client, server) = setup_test_connection().await.unwrap();
 
@@ -207,4 +208,3 @@ mod tests {
         assert_eq!(response.payload().as_ref(), b"pong");
     }
 }
-

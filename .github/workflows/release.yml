@@ -1,4 +1,4 @@
-name: Release to Crates.io
+name: Release
 
 on:
   push:
@@ -9,7 +9,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  verify:
+    name: Verify Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,35 +23,43 @@ jobs:
           override: true
           components: rustfmt, clippy
       
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
       
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Verify tag matches expected format
+        run: |
+          if ! [[ "${{ steps.version.outputs.VERSION }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Tag must be in format v*.*.* (e.g., v0.1.0)"
+            exit 1
+          fi
       
-      - name: Cache cargo build
+      - name: Cache cargo
         uses: actions/cache@v3
         with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       
       - name: Run tests
-        run: cargo test --lib
+        run: cargo test --lib --verbose
       
       - name: Run clippy
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --all-targets --all-features -- -D warnings
       
       - name: Check formatting
         run: cargo fmt --all -- --check
+      
+      - name: Security audit
+        run: |
+          cargo install cargo-audit
+          cargo audit
 
   publish:
-    needs: test
+    name: Publish to Crates.io
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,14 +75,30 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
       
-      - name: Update crate version
+      - name: Update Cargo.toml version
         run: |
-          sed -i 's/^version = "0.1.0"/version = "${{ steps.version.outputs.VERSION }}"/' Cargo.toml
+          sed -i 's/^version = "[^"]*"/version = "${{ steps.version.outputs.VERSION }}"/' Cargo.toml
+          echo "Updated version to ${{ steps.version.outputs.VERSION }}"
+          grep "^version" Cargo.toml
+      
+      - name: Update Cargo.lock
+        run: cargo update --package mxp --precise ${{ steps.version.outputs.VERSION }}
+      
+      - name: Verify version was updated
+        run: |
+          VERSION_IN_TOML=$(grep "^version" Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          if [ "$VERSION_IN_TOML" != "${{ steps.version.outputs.VERSION }}" ]; then
+            echo "Error: Version in Cargo.toml ($VERSION_IN_TOML) does not match tag (${{ steps.version.outputs.VERSION }})"
+            exit 1
+          fi
       
       - name: Publish to crates.io
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} --allow-dirty
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --allow-dirty
 
-  create_release:
+  github_release:
+    name: Create GitHub Release
     needs: publish
     runs-on: ubuntu-latest
     permissions:
@@ -88,11 +113,14 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Release ${{ steps.version.outputs.VERSION }}
+          name: v${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
           body: |
             ## MXP Protocol v${{ steps.version.outputs.VERSION }}
             
-            High-performance agent-to-agent communication protocol.
+            High-performance binary protocol for agent-to-agent communication.
             
             ### Installation
             
@@ -104,14 +132,20 @@ jobs:
             ### Features
             
             - Zero-copy message encoding/decoding
-            - QUIC transport with 0-RTT
-            - Built-in XXHash3 checksums
+            - QUIC transport with 0-RTT connections
+            - Built-in distributed tracing
+            - XXHash3 checksums for integrity
             - Sub-millisecond latency
-            - 100K+ messages/sec throughput
+            - 100,000+ messages/sec throughput
             
             ### Documentation
             
             - [Protocol Specification](https://github.com/yourusername/mxp-protocol/blob/main/SPEC.md)
-            - [API Docs](https://docs.rs/mxp/${{ steps.version.outputs.VERSION }})
+            - [API Documentation](https://docs.rs/mxp/${{ steps.version.outputs.VERSION }})
             - [Examples](https://github.com/yourusername/mxp-protocol/tree/main/examples)
+            - [Crates.io](https://crates.io/crates/mxp)
+            
+            ### Changes
+            
+            See the [CHANGELOG](https://github.com/yourusername/mxp-protocol/blob/main/CHANGELOG.md) for detailed changes.
 

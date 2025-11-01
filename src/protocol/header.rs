@@ -220,7 +220,9 @@ mod tests {
         bytes[0..4].copy_from_slice(&0xDEAD_BEEF_u32.to_le_bytes());
 
         let result = MessageHeader::from_bytes(&bytes);
-        assert!(matches!(result, Err(super::super::Error::InvalidMagic { .. })));
+        assert!(matches!(
+            result,
+            Err(super::super::Error::InvalidMagic { .. })
+        ));
     }
 }
-

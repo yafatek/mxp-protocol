@@ -28,4 +28,3 @@ pub const CHECKSUM_SIZE: usize = 8;
 
 /// Minimum message size (header + checksum)
 pub const MIN_MESSAGE_SIZE: usize = HEADER_SIZE + CHECKSUM_SIZE;
-

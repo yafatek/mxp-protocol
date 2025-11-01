@@ -9,14 +9,14 @@ pub enum Error {
     #[error("invalid magic number: expected 0x4D585031, got {found:#x}")]
     InvalidMagic {
         /// Found magic number
-        found: u32
+        found: u32,
     },
 
     /// Invalid message type
     #[error("invalid message type: {type_byte:#x}")]
     InvalidMessageType {
         /// Invalid type byte
-        type_byte: u8
+        type_byte: u8,
     },
 
     /// Checksum mismatch
@@ -25,7 +25,7 @@ pub enum Error {
         /// Expected checksum
         expected: u64,
         /// Found checksum
-        found: u64
+        found: u64,
     },
 
     /// Payload too large
@@ -34,7 +34,7 @@ pub enum Error {
         /// Payload size
         size: usize,
         /// Maximum allowed
-        max: usize
+        max: usize,
     },
 
     /// Buffer too small
@@ -43,7 +43,7 @@ pub enum Error {
         /// Needed size
         needed: usize,
         /// Actual size
-        got: usize
+        got: usize,
     },
 
     /// IO error
@@ -69,4 +69,3 @@ pub enum Error {
 
 /// Result type alias
 pub type Result<T> = std::result::Result<T, Error>;
-

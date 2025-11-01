@@ -91,8 +91,11 @@ pub fn decode(bytes: &[u8]) -> Result<Message> {
 
     // Extract checksum
     let checksum_offset = HEADER_SIZE + payload_len;
-    let stored_checksum =
-        u64::from_le_bytes(bytes[checksum_offset..checksum_offset + 8].try_into().unwrap());
+    let stored_checksum = u64::from_le_bytes(
+        bytes[checksum_offset..checksum_offset + 8]
+            .try_into()
+            .unwrap(),
+    );
 
     // Verify checksum
     let calculated_checksum = xxh3_64(&bytes[0..checksum_offset]);
@@ -200,4 +203,3 @@ mod tests {
         assert!(avg_micros < 100, "Decode too slow: {avg_micros}μs");
     }
 }
-

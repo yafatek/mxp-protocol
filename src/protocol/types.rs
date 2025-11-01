@@ -215,4 +215,3 @@ mod tests {
         assert!(!flags.is_final());
     }
 }
-

@@ -12,8 +12,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create a message
     let ping = Message::new(MessageType::Call, b"ping");
-    println!("Created message: type={:?}, payload={:?}", 
-        ping.message_type(), 
+    println!(
+        "Created message: type={:?}, payload={:?}",
+        ping.message_type(),
         std::str::from_utf8(ping.payload()).unwrap()
     );
 
@@ -23,7 +24,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Decode
     let decoded = Message::decode(&encoded)?;
-    println!("Decoded: payload={:?}", 
+    println!(
+        "Decoded: payload={:?}",
         std::str::from_utf8(decoded.payload()).unwrap()
     );
 
@@ -31,4 +33,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-

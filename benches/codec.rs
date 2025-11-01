@@ -3,7 +3,7 @@ use mxp::{Message, MessageType};
 
 fn bench_encode(c: &mut Criterion) {
     let mut group = c.benchmark_group("codec");
-    
+
     // Small message (64 bytes)
     let small_msg = Message::new(MessageType::Call, vec![0u8; 64]);
     group.throughput(Throughput::Bytes(64));
@@ -87,4 +87,3 @@ fn bench_roundtrip(c: &mut Criterion) {
 
 criterion_group!(benches, bench_encode, bench_decode, bench_roundtrip);
 criterion_main!(benches);
-

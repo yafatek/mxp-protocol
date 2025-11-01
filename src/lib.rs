@@ -50,4 +50,3 @@ pub const VERSION: &str = "1.0.0-draft";
 
 /// Default MXP port
 pub const DEFAULT_PORT: u16 = 9000;
-

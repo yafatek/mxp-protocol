@@ -130,4 +130,3 @@ mod tests {
         assert_eq!(decoded.message_id(), original.message_id());
     }
 }
-

@@ -32,7 +32,8 @@ impl Endpoint {
             .with_custom_certificate_verifier(SkipServerVerification::new())
             .with_no_client_auth();
 
-        let mut client_config = ClientConfig::new(Arc::new(QuicClientConfig::try_from(crypto).unwrap()));
+        let mut client_config =
+            ClientConfig::new(Arc::new(QuicClientConfig::try_from(crypto).unwrap()));
         let mut transport = quinn::TransportConfig::default();
 
         // Enable 0-RTT
@@ -115,7 +116,8 @@ impl Endpoint {
             .with_single_cert(vec![cert], key)
             .map_err(|e| Error::Connection(format!("TLS config error: {e}")))?;
 
-        let mut server_config = ServerConfig::with_crypto(Arc::new(QuicServerConfig::try_from(crypto).unwrap()));
+        let mut server_config =
+            ServerConfig::with_crypto(Arc::new(QuicServerConfig::try_from(crypto).unwrap()));
         let mut transport = quinn::TransportConfig::default();
 
         // Enable 0-RTT
@@ -196,4 +198,3 @@ mod tests {
         assert!(endpoint.local_addr().is_some());
     }
 }
-

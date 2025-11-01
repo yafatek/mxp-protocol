@@ -13,4 +13,3 @@ fn bench_placeholder(c: &mut Criterion) {
 
 criterion_group!(benches, bench_placeholder);
 criterion_main!(benches);
-
