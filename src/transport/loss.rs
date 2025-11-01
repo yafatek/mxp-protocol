@@ -15,6 +15,22 @@ pub struct SentPacketInfo {
 }
 
 impl SentPacketInfo {
+    /// Create a new sent packet record.
+    #[must_use]
+    pub fn new(
+        packet_number: u64,
+        time_sent: SystemTime,
+        size: usize,
+        ack_eliciting: bool,
+    ) -> Self {
+        Self {
+            packet_number,
+            time_sent,
+            size,
+            ack_eliciting,
+        }
+    }
+
     /// Packet number accessor.
     #[must_use]
     pub const fn packet_number(&self) -> u64 {
@@ -120,12 +136,7 @@ impl LossManager {
         size: usize,
         ack_eliciting: bool,
     ) {
-        let info = SentPacketInfo {
-            packet_number,
-            time_sent,
-            size,
-            ack_eliciting,
-        };
+        let info = SentPacketInfo::new(packet_number, time_sent, size, ack_eliciting);
         self.outstanding.push_back(SentPacketInternal { info });
         if ack_eliciting {
             self.update_loss_time(time_sent);

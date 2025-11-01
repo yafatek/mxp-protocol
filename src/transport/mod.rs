@@ -1,7 +1,9 @@
 //! MXP custom transport (work in progress)
 
 mod ack;
+mod anti_amplification;
 mod buffer;
+mod congestion;
 mod crypto;
 mod error;
 mod handshake;
@@ -13,7 +15,11 @@ mod socket;
 mod transport;
 
 pub use ack::{AckError, AckFrame, AckRange, DEFAULT_MAX_ACK_RANGES, ReceiveHistory};
+pub use anti_amplification::{
+    AmplificationConfig, AntiAmplificationGuard, DEFAULT_AMPLIFICATION_FACTOR,
+};
 pub use buffer::{Buffer, BufferPool};
+pub use congestion::{CongestionConfig, CongestionController};
 pub use crypto::{
     AEAD_KEY_LEN, AEAD_NONCE_LEN, AEAD_TAG_LEN, AeadKey, AeadNonce, AeadTag, CryptoError,
     HEADER_PROTECTION_KEY_LEN, HEADER_PROTECTION_MASK_LEN, HEADER_PROTECTION_SAMPLE_LEN,
