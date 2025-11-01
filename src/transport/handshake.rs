@@ -4,15 +4,15 @@ use std::collections::{HashSet, VecDeque};
 use std::time::{Duration, SystemTime};
 
 use super::crypto::{
-    derive_session_keys, x25519_diffie_hellman, AeadKey, AeadNonce, AeadTag, CryptoError,
-    HandshakeState, PrivateKey, PublicKey, SessionKeys, AEAD_NONCE_LEN, PUBLIC_KEY_LEN,
-    SHARED_SECRET_LEN,
+    derive_session_keys, x25519_diffie_hellman, AeadNonce, CryptoError, HandshakeState,
+    PrivateKey, PublicKey, SessionKeys, AEAD_NONCE_LEN, PUBLIC_KEY_LEN, SHARED_SECRET_LEN,
 };
+use super::session::{SessionTicket, SessionTicketManager};
 
 /// Different handshake messages exchanged between peers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HandshakeMessageKind {
-    /// Initiator hello (includes ephemeral public key).
+    /// Initiator hello (includes an ephemeral public key).
     InitiatorHello = 0x01,
     /// Responder hello (includes responder ephemeral key and confirmation data).
     ResponderHello = 0x02,
@@ -72,7 +72,7 @@ impl HandshakeMessage {
         }
     }
 
-    /// Encode message into bytes. Format: [kind (1)][ephemeral (32)][len (u16 LE)][payload].
+    /// Encode a message into bytes. Format: [kind (1)][ephemeral (32)][len (u16 LE)][payload].
     #[must_use]
     pub fn encode(&self) -> Vec<u8> {
         let mut out = Vec::with_capacity(1 + PUBLIC_KEY_LEN + 2 + self.payload.len());
@@ -133,7 +133,6 @@ impl HandshakeMessage {
 enum InitiatorStage {
     Ready,
     AwaitingResponse,
-    AwaitingFinalization,
     Complete,
 }
 
@@ -177,9 +176,8 @@ impl Initiator {
         self.state.set_local_ephemeral(local_ephemeral.clone());
         let public_ephemeral = local_ephemeral.public_key();
 
-        // Mix remote static into chaining key as placeholder prologue.
-        self.state
-            .mix_key(self.remote_static.as_bytes());
+        // Mix remote static into a chaining key as a placeholder prologue.
+        self.state.mix_key(self.remote_static.as_bytes());
 
         self.stage = InitiatorStage::AwaitingResponse;
         HandshakeMessage::new(HandshakeMessageKind::InitiatorHello, public_ephemeral, Vec::new())
@@ -196,34 +194,31 @@ impl Initiator {
             return Err(HandshakeError::UnexpectedMessage);
         }
 
-        self.anti_replay
-            .record(message.payload())?
-            ;
+        self.anti_replay.record(message.payload())?;
 
-        self.state.set_remote_ephemeral(message.ephemeral().clone());
+        let remote_ephemeral = message.ephemeral().clone();
+        self.state.set_remote_ephemeral(remote_ephemeral.clone());
 
         let local_ephemeral = self
             .state
             .local_ephemeral()
+            .cloned()
             .ok_or(HandshakeError::MissingKeyMaterial)?;
 
-        let shared = x25519_diffie_hellman(local_ephemeral, message.ephemeral())?;
+        let shared = x25519_diffie_hellman(&local_ephemeral, &remote_ephemeral)?;
         self.state.mix_key(shared.as_bytes());
 
-        // Incorporate payload into chaining key as confirmation data.
-        self.state.mix_key(message.payload());
+        let session_keys = derive_session_keys(&self.state, true);
+
+        // Incorporate payload into a chaining key as confirmation data.
+        let payload_clone = message.payload().to_vec();
+        self.state.mix_key(&payload_clone);
 
         let confirmation = self.make_confirmation_payload();
         let final_message = HandshakeMessage::new(
             HandshakeMessageKind::InitiatorFinish,
             local_ephemeral.public_key(),
             confirmation,
-        );
-
-        let session_keys = derive_session_keys(
-            self.state.chaining_key(),
-            self.state.temp_key(),
-            true,
         );
 
         self.stage = InitiatorStage::Complete;
@@ -242,6 +237,7 @@ pub struct Responder {
     state: HandshakeState,
     stage: ResponderStage,
     anti_replay: AntiReplayStore,
+    tickets: SessionTicketManager,
 }
 
 impl Responder {
@@ -252,6 +248,7 @@ impl Responder {
             state: HandshakeState::new(local_static),
             stage: ResponderStage::Ready,
             anti_replay: AntiReplayStore::new(512, Duration::from_secs(60)),
+            tickets: SessionTicketManager::new(Duration::from_secs(600), 1024),
         }
     }
 
@@ -266,7 +263,8 @@ impl Responder {
             return Err(HandshakeError::UnexpectedMessage);
         }
 
-        self.anti_replay.record(&message.encode())?;
+        let encoded = message.encode();
+        self.anti_replay.record(&encoded)?;
 
         self.state.set_remote_ephemeral(message.ephemeral().clone());
 
@@ -294,7 +292,7 @@ impl Responder {
     pub fn handle_initiator_finish(
         &mut self,
         message: &HandshakeMessage,
-    ) -> Result<SessionKeys, HandshakeError> {
+    ) -> Result<ResponderOutcome, HandshakeError> {
         if self.stage != ResponderStage::AwaitingFinal
             || message.kind() != HandshakeMessageKind::InitiatorFinish
         {
@@ -303,25 +301,30 @@ impl Responder {
 
         self.anti_replay.record(message.payload())?;
 
-        self.state.set_remote_ephemeral(message.ephemeral().clone());
+        let remote_ephemeral = message.ephemeral().clone();
+        self.state.set_remote_ephemeral(remote_ephemeral.clone());
 
         let local_ephemeral = self
             .state
             .local_ephemeral()
+            .cloned()
             .ok_or(HandshakeError::MissingKeyMaterial)?;
 
-        let shared = x25519_diffie_hellman(local_ephemeral, message.ephemeral())?;
+        let shared = x25519_diffie_hellman(&local_ephemeral, &remote_ephemeral)?;
         self.state.mix_key(shared.as_bytes());
-        self.state.mix_key(message.payload());
 
-        let session_keys = derive_session_keys(
-            self.state.chaining_key(),
-            self.state.temp_key(),
-            false,
-        );
+        let session_keys = derive_session_keys(&self.state, false);
+
+        let payload_clone = message.payload().to_vec();
+        self.state.mix_key(&payload_clone);
+
+        let ticket = self.tickets.issue(self.state.chaining_key());
 
         self.stage = ResponderStage::Complete;
-        Ok(session_keys)
+        Ok(ResponderOutcome {
+            session_keys,
+            session_ticket: ticket,
+        })
     }
 }
 
@@ -364,7 +367,7 @@ impl AntiReplayStore {
     }
 
     fn evict_expired(&mut self) {
-        while let Some((entry, timestamp)) = self.order.front() {
+        while let Some((_, timestamp)) = self.order.front() {
             if timestamp.elapsed().unwrap_or_default() > self.ttl {
                 let (entry, _) = self.order.pop_front().unwrap();
                 self.seen.remove(&entry);
@@ -375,7 +378,7 @@ impl AntiReplayStore {
     }
 }
 
-/// Utility function to derive a nonce from packet numbers.
+/// Utility function to derive nonce from packet numbers.
 #[must_use]
 pub fn nonce_from_packet_number(packet_number: u64) -> AeadNonce {
     let mut bytes = [0u8; AEAD_NONCE_LEN];
@@ -383,5 +386,87 @@ pub fn nonce_from_packet_number(packet_number: u64) -> AeadNonce {
         *byte = packet_number.to_le_bytes()[idx % 8].wrapping_add((idx * 17) as u8);
     }
     AeadNonce::from_array(bytes)
+}
+
+/// Outcome of a responder-side handshake.
+#[derive(Debug, Clone)]
+pub struct ResponderOutcome {
+    /// Session keys negotiated during the handshake.
+    pub session_keys: SessionKeys,
+    /// Ticket for future resumption attempts.
+    pub session_ticket: SessionTicket,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::transport::crypto::AeadKey;
+    use crate::transport::{AEAD_KEY_LEN, PRIVATE_KEY_LEN};
+
+    fn fixed_private(seed: u8) -> PrivateKey {
+        let mut bytes = [0u8; PRIVATE_KEY_LEN];
+        for (idx, byte) in bytes.iter_mut().enumerate() {
+            *byte = seed.wrapping_add(idx as u8);
+        }
+        PrivateKey::from_array(bytes)
+    }
+
+    fn fixed_public(seed: u8) -> PublicKey {
+        fixed_private(seed).public_key()
+    }
+
+    #[test]
+    fn initiator_responder_handshake_roundtrip() {
+        let initiator_static = fixed_private(0x10);
+        let responder_static = fixed_private(0x40);
+        let responder_public = responder_static.public_key();
+
+        let mut initiator = Initiator::new(initiator_static.clone(), responder_public.clone());
+        let mut responder = Responder::new(responder_static);
+
+        let msg_init = initiator.initiate();
+        let msg_resp = responder
+            .handle_initiator_hello(&msg_init)
+            .expect("responder hello");
+        let (msg_final, initiator_keys) = initiator
+            .handle_response(&msg_resp)
+            .expect("initiator finish");
+        let outcome = responder
+            .handle_initiator_finish(&msg_final)
+            .expect("responder finish");
+
+        assert_eq!(initiator_keys.send().as_bytes(), outcome.session_keys.receive().as_bytes());
+        assert_eq!(initiator_keys.receive().as_bytes(), outcome.session_keys.send().as_bytes());
+        assert!(outcome.session_ticket.is_valid());
+    }
+
+    #[test]
+    fn responder_session_resumption_validates_secret() {
+        let mut manager = SessionTicketManager::new(Duration::from_secs(60), 4);
+        let seed = [0xAAu8; SHARED_SECRET_LEN];
+        let ticket = manager.issue(&seed);
+
+        let resume = manager
+            .resume(ticket.id(), &seed)
+            .expect("ticket should resume");
+
+        assert_eq!(resume.id(), ticket.id());
+        assert_eq!(resume.secret(), ticket.secret());
+    }
+
+    #[test]
+    fn nonce_derivation_varies_with_packet_number() {
+        let nonce_a = nonce_from_packet_number(1);
+        let nonce_b = nonce_from_packet_number(2);
+        assert_ne!(nonce_a.as_bytes(), nonce_b.as_bytes());
+
+        // Basic sanity that derived nonce size matches AEAD requirements.
+        let key = AeadKey::from_array([0x11u8; AEAD_KEY_LEN]);
+        let plaintext = [0x22u8; 8];
+        let (cipher, tag) = super::super::crypto::encrypt(&key, &nonce_a, &plaintext, &[]);
+        let decrypted = super::super::crypto::decrypt(&key, &nonce_a, &cipher, &[], &tag)
+            .expect("decrypt");
+        assert_eq!(plaintext.to_vec(), decrypted);
+    }
 }
 

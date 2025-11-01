@@ -28,9 +28,9 @@ All crates live under `mxp-protocol/transport/` with internal dependencies only.
 - [x] Doc updates (`architecture.md`, `plan.md`, API stubs).
 
 ### Phase 1 — Handshake & Security (Week 2-4)
-- [ ] Noise IK handshake implementation (client & server roles).
-- [ ] Key derivation + AEAD sealing/unsealing (ChaCha20-Poly1305 path).
-- [ ] Session ticket and anti-replay store.
+- [x] Noise IK handshake implementation (client & server roles).
+- [x] Key derivation + AEAD sealing/unsealing (ChaCha20-Poly1305 path).
+- [x] Session ticket and anti-replay store.
 - [ ] Unit/property tests for handshake transcripts.
 - [ ] Fuzz harness for handshake message parser.
 

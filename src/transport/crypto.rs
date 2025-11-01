@@ -1,7 +1,5 @@
 //! Cryptographic primitives for MXP transport (Noise IK handshake, key schedule, AEAD).
 
-use std::convert::TryInto;
-
 /// Length of public keys (X25519) in bytes.
 pub const PUBLIC_KEY_LEN: usize = 32;
 /// Length of private keys (X25519) in bytes.
@@ -22,10 +20,23 @@ pub enum CryptoError {
     InvalidKeyLength,
     /// Nonce value has invalid length.
     InvalidNonceLength,
+    /// Authentication tag has invalid length.
+    InvalidTagLength,
     /// Authentication failure during decryption.
     AuthenticationFailed,
     /// HKDF expansion failure.
     KeyDerivationFailed,
+}
+
+mod mixing;
+
+fn copy_checked<const N: usize>(bytes: &[u8], on_err: CryptoError) -> Result<[u8; N], CryptoError> {
+    if bytes.len() != N {
+        return Err(on_err);
+    }
+    let mut array = [0u8; N];
+    array.copy_from_slice(bytes);
+    Ok(array)
 }
 
 /// Public key for X25519 operations.
@@ -41,12 +52,7 @@ impl PublicKey {
 
     /// Construct from raw byte slice.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, CryptoError> {
-        if bytes.len() != PUBLIC_KEY_LEN {
-            return Err(CryptoError::InvalidKeyLength);
-        }
-        let mut key = [0u8; PUBLIC_KEY_LEN];
-        key.copy_from_slice(bytes);
-        Ok(Self(key))
+        Ok(Self(copy_checked(bytes, CryptoError::InvalidKeyLength)?))
     }
 
     /// Borrow as bytes.
@@ -79,12 +85,7 @@ impl PrivateKey {
 
     /// Construct from raw byte slice.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, CryptoError> {
-        if bytes.len() != PRIVATE_KEY_LEN {
-            return Err(CryptoError::InvalidKeyLength);
-        }
-        let mut key = [0u8; PRIVATE_KEY_LEN];
-        key.copy_from_slice(bytes);
-        Ok(Self(key))
+        Ok(Self(copy_checked(bytes, CryptoError::InvalidKeyLength)?))
     }
 
     /// Borrow as bytes.
@@ -121,12 +122,7 @@ pub struct SharedSecret([u8; SHARED_SECRET_LEN]);
 impl SharedSecret {
     /// Construct from raw bytes.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, CryptoError> {
-        if bytes.len() != SHARED_SECRET_LEN {
-            return Err(CryptoError::InvalidKeyLength);
-        }
-        let mut secret = [0u8; SHARED_SECRET_LEN];
-        secret.copy_from_slice(bytes);
-        Ok(Self(secret))
+        Ok(Self(copy_checked(bytes, CryptoError::InvalidKeyLength)?))
     }
 
     /// Borrow as bytes.
@@ -149,12 +145,7 @@ impl AeadKey {
 
     /// Construct from raw bytes.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, CryptoError> {
-        if bytes.len() != AEAD_KEY_LEN {
-            return Err(CryptoError::InvalidKeyLength);
-        }
-        let mut key = [0u8; AEAD_KEY_LEN];
-        key.copy_from_slice(bytes);
-        Ok(Self(key))
+        Ok(Self(copy_checked(bytes, CryptoError::InvalidKeyLength)?))
     }
 
     /// Borrow as bytes.
@@ -177,12 +168,7 @@ impl AeadNonce {
 
     /// Construct from raw bytes.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, CryptoError> {
-        if bytes.len() != AEAD_NONCE_LEN {
-            return Err(CryptoError::InvalidNonceLength);
-        }
-        let mut nonce = [0u8; AEAD_NONCE_LEN];
-        nonce.copy_from_slice(bytes);
-        Ok(Self(nonce))
+        Ok(Self(copy_checked(bytes, CryptoError::InvalidNonceLength)?))
     }
 
     /// Borrow as bytes.
@@ -216,12 +202,7 @@ impl AeadTag {
 
     /// Construct from raw bytes.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, CryptoError> {
-        if bytes.len() != AEAD_TAG_LEN {
-            return Err(CryptoError::InvalidNonceLength);
-        }
-        let mut tag = [0u8; AEAD_TAG_LEN];
-        tag.copy_from_slice(bytes);
-        Ok(Self(tag))
+        Ok(Self(copy_checked(bytes, CryptoError::InvalidTagLength)?))
     }
 
     /// Borrow as bytes.
@@ -308,13 +289,8 @@ impl HandshakeState {
 
     /// Inject new key material via HKDF (placeholder implementation).
     pub fn mix_key(&mut self, material: &[u8]) {
-        for (dst, src) in self.chaining_key.iter_mut().zip(material.iter().cycle()) {
-            *dst ^= src;
-        }
-        // Derive temp key from chaining key (placeholder).
-        for (dst, src) in self.temp_key.iter_mut().zip(self.chaining_key.iter()) {
-            *dst = src.wrapping_add(0x42);
-        }
+        mixing::xor_cycle(&mut self.chaining_key, material, 0x00);
+        mixing::rotate_add(&mut self.temp_key, &self.chaining_key, 0x42);
     }
 }
 
@@ -346,22 +322,42 @@ impl SessionKeys {
 }
 
 /// Derive session keys based on the chaining key and temp key.
-pub fn derive_session_keys(
-    chaining_key: &[u8; SHARED_SECRET_LEN],
-    temp_key: &[u8; AEAD_KEY_LEN],
-    initiator: bool,
-) -> SessionKeys {
+pub fn derive_session_keys(state: &HandshakeState, initiator: bool) -> SessionKeys {
+    let chaining_key = *state.chaining_key();
+    let temp_key = *state.temp_key();
+    let local_static = *state.local_static().as_bytes();
+    let remote_static = state
+        .remote_static()
+        .map(|k| *k.as_bytes())
+        .unwrap_or([0u8; SHARED_SECRET_LEN]);
+    let local_eph = state
+        .local_ephemeral()
+        .map(|k| *k.public_key().as_bytes())
+        .unwrap_or([0u8; SHARED_SECRET_LEN]);
+    let remote_eph = state
+        .remote_ephemeral()
+        .map(|k| *k.as_bytes())
+        .unwrap_or([0u8; SHARED_SECRET_LEN]);
+
+    let base = mixing::symmetric_fold(
+        &chaining_key,
+        &temp_key,
+        &local_static,
+        &remote_static,
+        &local_eph,
+        &remote_eph,
+    );
+
     let mut send = [0u8; AEAD_KEY_LEN];
     let mut receive = [0u8; AEAD_KEY_LEN];
 
-    for i in 0..AEAD_KEY_LEN {
-        let base = temp_key[i] ^ chaining_key[i % SHARED_SECRET_LEN];
+    for (idx, byte) in base.iter().enumerate() {
         if initiator {
-            send[i] = base;
-            receive[i] = base.rotate_left(1) ^ 0xA5;
+            send[idx] = *byte;
+            receive[idx] = byte.rotate_left(1) ^ 0xA5;
         } else {
-            send[i] = base.rotate_left(1) ^ 0xA5;
-            receive[i] = base;
+            send[idx] = byte.rotate_left(1) ^ 0xA5;
+            receive[idx] = *byte;
         }
     }
 
@@ -395,7 +391,7 @@ pub fn decrypt(
     _tag: &AeadTag,
 ) -> Result<Vec<u8>, CryptoError> {
     // Since encrypt is XOR-based placeholder, decrypt is identical.
-    let (mut plaintext, _) = encrypt(key, nonce, ciphertext, &[]);
+    let (plaintext, _) = encrypt(key, nonce, ciphertext, &[]);
     Ok(plaintext)
 }
 

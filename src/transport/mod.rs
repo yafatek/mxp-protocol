@@ -4,6 +4,7 @@ mod buffer;
 mod crypto;
 mod handshake;
 mod packet;
+mod session;
 mod socket;
 mod transport;
 
@@ -15,8 +16,9 @@ pub use crypto::{
 };
 pub use handshake::{
     nonce_from_packet_number, AntiReplayStore, HandshakeError, HandshakeMessage,
-    HandshakeMessageKind, Initiator, Responder,
+    HandshakeMessageKind, Initiator, Responder, ResponderOutcome,
 };
 pub use packet::{Frame, FrameType, PacketFlags, PacketHeader};
+pub use session::{SessionTicket, SessionTicketManager, TICKET_ID_LEN, TICKET_SECRET_LEN};
 pub use socket::{SocketBinding, SocketError};
 pub use transport::{Transport, TransportConfig, TransportHandle};

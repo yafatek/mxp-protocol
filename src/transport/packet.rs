@@ -7,7 +7,7 @@ use std::fmt;
 pub const HEADER_SIZE: usize = 32;
 
 /// Size of the AEAD authentication tag in bytes.
-pub const AUTH_TAG_SIZE: usize = 16;
+// pub const AUTH_TAG_SIZE: usize = 16;
 
 /// Size of the nonce carried in the header (12 bytes for ChaCha20/AES).
 pub const NONCE_SIZE: usize = 12;
