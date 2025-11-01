@@ -8,7 +8,9 @@ use super::stream::StreamId;
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum FlowControlError {
     /// Attempted to send more data than allowed by the advertised window.
-    #[error("flow control limit exceeded: attempted {attempted} bytes with {available} bytes available")]
+    #[error(
+        "flow control limit exceeded: attempted {attempted} bytes with {available} bytes available"
+    )]
     SendWindowExceeded {
         /// Number of bytes available in the window.
         available: u64,
@@ -36,8 +38,9 @@ impl FlowWindow {
 
     /// Increase the window, e.g. when the peer advertises a new MAX_DATA value.
     pub fn update_limit(&mut self, new_max: u64) {
-        if new_max > self.max_data {
-            self.max_data = new_max;
+        self.max_data = new_max;
+        if self.consumed > self.max_data {
+            self.consumed = self.max_data;
         }
     }
 
@@ -74,7 +77,7 @@ impl FlowWindow {
 }
 
 /// Flow control management for connection-level and per-stream accounting.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct FlowController {
     connection: FlowWindow,
     streams: HashMap<StreamId, FlowWindow>,
@@ -158,6 +161,12 @@ impl FlowController {
     }
 }
 
+impl Default for FlowController {
+    fn default() -> Self {
+        Self::new(0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -188,4 +197,3 @@ mod tests {
         assert_eq!(controller.stream_available(stream), 20);
     }
 }
-

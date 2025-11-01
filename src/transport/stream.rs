@@ -2,6 +2,8 @@
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 
+use super::flow::{FlowControlError, FlowController};
+
 /// Direction of stream initiation relative to the local endpoint.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EndpointRole {
@@ -316,8 +318,7 @@ impl Stream {
 pub struct StreamManager {
     _role: EndpointRole,
     streams: HashMap<StreamId, Stream>,
-    connection_limit: u64,
-    stream_limits: HashMap<StreamId, u64>,
+    flow: FlowController,
 }
 
 impl StreamManager {
@@ -327,30 +328,24 @@ impl StreamManager {
         Self {
             _role: role,
             streams: HashMap::new(),
-            connection_limit: u64::MAX,
-            stream_limits: HashMap::new(),
+            flow: FlowController::new(u64::MAX),
         }
     }
 
     /// Configure the connection-level send window (MAX_DATA from peer).
     pub fn set_connection_limit(&mut self, limit: u64) {
-        self.connection_limit = limit;
+        self.flow.update_connection_limit(limit);
     }
 
     /// Configure a stream-specific send window (per-stream MAX_DATA from peer).
     pub fn set_stream_limit(&mut self, id: StreamId, limit: u64) {
-        self.stream_limits.insert(id, limit);
+        self.flow.update_stream_limit(id, limit);
     }
 
     /// Compute the remaining bytes that may be sent for the stream respecting connection limits.
     #[must_use]
     pub fn stream_send_allowance(&self, id: StreamId) -> u64 {
-        let stream_limit = self
-            .stream_limits
-            .get(&id)
-            .copied()
-            .unwrap_or(u64::MAX);
-        self.connection_limit.min(stream_limit)
+        self.flow.stream_available(id)
     }
 
     /// Obtain a mutable reference to a stream, creating it if required.
@@ -379,16 +374,30 @@ impl StreamManager {
         &mut self,
         id: StreamId,
         max_len: usize,
-    ) -> Option<SendChunk> {
-        let allowance = self.stream_send_allowance(id);
+    ) -> Result<Option<SendChunk>, FlowControlError> {
+        let allowance = self.flow.stream_available(id);
         if allowance == 0 {
-            return None;
+            return Ok(None);
         }
-        let limit = allowance.min(max_len as u64) as usize;
+        let limit = allowance
+            .min(self.flow.connection_available())
+            .min(max_len as u64) as usize;
         if limit == 0 {
-            return None;
+            return Ok(None);
         }
-        self.streams.get_mut(&id)?.next_send_chunk(limit)
+
+        let stream = match self.streams.get_mut(&id) {
+            Some(stream) => stream,
+            None => return Ok(None),
+        };
+
+        let chunk = stream.next_send_chunk(limit);
+        if let Some(ref chunk) = chunk {
+            if !chunk.payload.is_empty() {
+                self.flow.consume(id, chunk.payload.len() as u64)?;
+            }
+        }
+        Ok(chunk)
     }
 
     /// Ingest remote data for the specified stream.
@@ -484,12 +493,33 @@ mod tests {
         manager.get_or_create(stream_id); // create explicitly
 
         manager.queue_send(stream_id, b"abc").unwrap();
-        let chunk = manager.poll_send_chunk(stream_id, 2).expect("chunk");
+        let chunk = manager
+            .poll_send_chunk(stream_id, 2)
+            .unwrap()
+            .expect("chunk");
         assert_eq!(chunk.payload, b"ab");
         assert!(!chunk.fin);
 
         manager.ingest(stream_id, 0, b"xyz", false).expect("ingest");
         let read = manager.read(stream_id, 8).unwrap();
         assert_eq!(read, b"xyz");
+    }
+
+    #[test]
+    fn manager_respects_flow_limits() {
+        let mut manager = StreamManager::new(EndpointRole::Client);
+        let stream_id = StreamId::new(EndpointRole::Client, StreamKind::Bidirectional, 1);
+        manager.get_or_create(stream_id);
+        manager.set_connection_limit(5);
+        manager.set_stream_limit(stream_id, 3);
+        manager.queue_send(stream_id, b"abcdef").unwrap();
+
+        let chunk = manager
+            .poll_send_chunk(stream_id, 10)
+            .unwrap()
+            .expect("chunk");
+        assert_eq!(chunk.payload, b"abc");
+        assert_eq!(manager.stream_send_allowance(stream_id), 0);
+        assert!(manager.poll_send_chunk(stream_id, 10).unwrap().is_none());
     }
 }

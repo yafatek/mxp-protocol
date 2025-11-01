@@ -7,6 +7,7 @@ mod congestion;
 mod crypto;
 mod datagram;
 mod error;
+mod flow;
 mod handshake;
 mod loss;
 mod packet;
@@ -33,6 +34,7 @@ pub use datagram::{
     DatagramQueue,
 };
 pub use error::TransportError;
+pub use flow::{FlowControlError, FlowController, FlowWindow};
 pub use handshake::{
     AntiReplayStore, HandshakeError, HandshakeMessage, HandshakeMessageKind, Initiator, Responder,
     ResponderOutcome, nonce_from_packet_number,

@@ -8,6 +8,7 @@
 | `relay-transport-crypto` | Noise handshake, key schedule, AEAD wrappers | Crypto specialist | Re-exports hardened primitives only |
 | `relay-transport-reliability` | ACK ranges, loss detection, congestion control | Networking engineer | Configurable algorithms (BBR-like, CUBIC fallback) |
 | `relay-transport-stream` | Reliable stream state machines and buffers | Transport team | Implemented in `stream.rs` |
+| `relay-transport-flow` | Connection/stream flow-control accounting | Transport team | `flow.rs` (in progress) |
 | `relay-transport-scheduler` | Stream/dgram queues, priority logic, flow control | Protocol engineer | Hooks for MXP message priorities |
 | `relay-transport-api` | Public Rust API exposing connections/streams | SDK interface lead | Defines MXP-native API surface |
 | `relay-transport-tests` | Shared fixtures, fuzz harnesses, integration harness | QA/Infra | Lives under `tests/` with custom runner |
@@ -43,9 +44,9 @@ All crates live under `mxp-protocol/transport/` with internal dependencies only.
 - [x] Anti-amplification guardrails and rate limiting.
 - [x] Integration tests simulating loss/reorder with mock sockets.
 
-### Phase 3 — Streams & Scheduler (Week 8-10)
 - [ ] Stream abstraction (open/data/fin) with priority metadata *(core send/receive buffering landed; priority tagging pending)*.
 - [ ] Datagram path with rate limiter *(queue + amplification budget checks merged; transmitter wiring next)*.
+- [ ] Flow control windows (connection + stream) *(FlowWindow/FlowController tracking added; integrated with stream chunk emission; control frames outstanding)*.
 - [ ] Flow control windows (connection + stream).
 - [ ] Weighted fair queue scheduler honoring MXP message classes.
 - [ ] Backpressure signals to MXP core API.
