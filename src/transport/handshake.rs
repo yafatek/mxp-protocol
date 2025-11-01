@@ -208,7 +208,22 @@ impl Initiator {
         let shared = x25519_diffie_hellman(&local_ephemeral, &remote_ephemeral)?;
         self.state.mix_key(shared.as_bytes());
 
-        let session_keys = derive_session_keys(&self.state);
+        let local_static_pub = self.state.local_static().public_key();
+        let remote_static_pub = self
+            .state
+            .remote_static()
+            .cloned()
+            .unwrap_or(self.remote_static.clone());
+        let local_ephemeral_pub = local_ephemeral.public_key();
+
+        let session_keys = derive_session_keys(
+            shared.as_bytes(),
+            local_static_pub.as_bytes(),
+            remote_static_pub.as_bytes(),
+            local_ephemeral_pub.as_bytes(),
+            remote_ephemeral.as_bytes(),
+            true,
+        );
 
         // Incorporate payload into a chaining key as confirmation data.
         let payload_clone = message.payload().to_vec();
@@ -246,6 +261,7 @@ impl Responder {
     pub fn new(local_static: PrivateKey, remote_static: Option<PublicKey>) -> Self {
         let mut state = HandshakeState::new(local_static);
         if let Some(peer) = remote_static {
+            state.mix_key(peer.as_bytes());
             state.set_remote_static(peer);
         }
 
@@ -306,8 +322,12 @@ impl Responder {
 
         self.anti_replay.record(message.payload())?;
 
-        let remote_ephemeral = message.ephemeral().clone();
-        self.state.set_remote_ephemeral(remote_ephemeral.clone());
+        // Remote ephemeral was already set during InitiatorHello; do not overwrite.
+        let remote_ephemeral = self
+            .state
+            .remote_ephemeral()
+            .cloned()
+            .ok_or(HandshakeError::MissingKeyMaterial)?;
 
         let local_ephemeral = self
             .state
@@ -318,7 +338,22 @@ impl Responder {
         let shared = x25519_diffie_hellman(&local_ephemeral, &remote_ephemeral)?;
         self.state.mix_key(shared.as_bytes());
 
-        let session_keys = derive_session_keys(&self.state);
+        let local_static_pub = self.state.local_static().public_key();
+        let remote_static_pub = self
+            .state
+            .remote_static()
+            .cloned()
+            .unwrap_or_else(|| PublicKey::from_array([0u8; PUBLIC_KEY_LEN]));
+        let local_ephemeral_pub = local_ephemeral.public_key();
+
+        let session_keys = derive_session_keys(
+            shared.as_bytes(),
+            local_static_pub.as_bytes(),
+            remote_static_pub.as_bytes(),
+            local_ephemeral_pub.as_bytes(),
+            remote_ephemeral.as_bytes(),
+            false,
+        );
 
         let payload_clone = message.payload().to_vec();
         self.state.mix_key(&payload_clone);

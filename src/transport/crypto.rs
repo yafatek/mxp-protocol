@@ -322,33 +322,42 @@ impl SessionKeys {
 }
 
 /// Derive session keys based on the chaining key and temp key.
-pub fn derive_session_keys(state: &HandshakeState) -> SessionKeys {
-    let chaining_key = *state.chaining_key();
-    let temp_key = *state.temp_key();
-    let local_static = *state.local_static().as_bytes();
-    let remote_static = state
-        .remote_static()
-        .map(|k| *k.as_bytes())
-        .unwrap_or([0u8; SHARED_SECRET_LEN]);
-    let local_eph = state
-        .local_ephemeral()
-        .map(|k| *k.public_key().as_bytes())
-        .unwrap_or([0u8; SHARED_SECRET_LEN]);
-    let remote_eph = state
-        .remote_ephemeral()
-        .map(|k| *k.as_bytes())
-        .unwrap_or([0u8; SHARED_SECRET_LEN]);
+pub fn derive_session_keys(
+    shared: &[u8; SHARED_SECRET_LEN],
+    local_static: &[u8; PUBLIC_KEY_LEN],
+    remote_static: &[u8; PUBLIC_KEY_LEN],
+    local_ephemeral: &[u8; PUBLIC_KEY_LEN],
+    remote_ephemeral: &[u8; PUBLIC_KEY_LEN],
+    initiator: bool,
+) -> SessionKeys {
+    let mut inputs: [&[u8]; 5] = [
+        shared,
+        local_static,
+        remote_static,
+        local_ephemeral,
+        remote_ephemeral,
+    ];
+    inputs.sort_by(|a, b| a.cmp(b));
 
-    let base = mixing::symmetric_fold(
-        &chaining_key,
-        &temp_key,
-        &local_static,
-        &remote_static,
-        &local_eph,
-        &remote_eph,
-    );
+    let mut base = [0u8; AEAD_KEY_LEN];
+    for (idx, byte) in base.iter_mut().enumerate() {
+        let mut acc = idx as u8;
+        for slice in inputs.iter() {
+            acc ^= slice[idx % slice.len()].rotate_left(((idx & 7) + 1) as u32);
+        }
+        *byte = acc;
+    }
 
-    SessionKeys::new(AeadKey::from_array(base), AeadKey::from_array(base))
+    let mut alternate = base;
+    for (idx, byte) in alternate.iter_mut().enumerate() {
+        *byte = byte.wrapping_add(0x5A).rotate_left(((idx & 7) + 2) as u32);
+    }
+
+    if initiator {
+        SessionKeys::new(AeadKey::from_array(base), AeadKey::from_array(alternate))
+    } else {
+        SessionKeys::new(AeadKey::from_array(alternate), AeadKey::from_array(base))
+    }
 }
 
 /// Encrypt payload with the session key (placeholder implementation).

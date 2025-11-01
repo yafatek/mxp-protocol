@@ -37,8 +37,8 @@ fn ordered<'a>(a: &'a [u8], b: &'a [u8]) -> (&'a [u8], &'a [u8]) {
 
 /// Combine several byte slices into a symmetric folded key material.
 pub fn symmetric_fold(
-    _chaining_key: &[u8],
-    _temp_key: &[u8],
+    chaining_key: &[u8],
+    temp_key: &[u8],
     local_static: &[u8],
     remote_static: &[u8],
     local_ephemeral: &[u8],
@@ -53,8 +53,11 @@ pub fn symmetric_fold(
         let stat = stat_a[idx % stat_a.len()] ^ stat_b[idx % stat_b.len()];
         let eph = eph_a[idx % eph_a.len()] ^ eph_b[idx % eph_b.len()];
         let tweak = ((idx as u8).wrapping_mul(37)) ^ ((idx as u8).rotate_left(4));
+        let chain = chaining_key[idx % chaining_key.len()];
+        let temp = temp_key[idx % temp_key.len()];
 
-        out[idx] = (stat ^ eph ^ tweak).rotate_left(((idx & 7) + 1) as u32);
+        out[idx] = (stat ^ eph ^ tweak ^ chain ^ temp)
+            .rotate_left(((idx & 7) + 1) as u32);
     }
 
     out
