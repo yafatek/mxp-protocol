@@ -3,9 +3,9 @@ name = "mxp"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
-authors = ["Feras <your-email@example.com>"]
+authors = ["YAFA Cloud Services LLC support@yafa.dev"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/yourusername/mxp-protocol"
+repository = "https://github.com/yafatek/mxp-protocol"
 homepage = "https://getmxp.xyz"
 keywords = ["mxp", "agents", "ai", "protocol", "quic"]
 categories = ["network-programming", "asynchronous"]
@@ -30,7 +30,7 @@ xxhash-rust = { version = "0.8", features = ["xxh3"] }
 tokio = { version = "1.35", features = ["full"] }
 
 # Error handling
-thiserror = "1.0"
+thiserror = "2.0.17"
 
 # Tracing
 tracing = "0.1"
@@ -43,7 +43,7 @@ serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]
 # Benchmarking
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.7.0", features = ["html_reports"] }
 
 # Property-based testing
 proptest = "1.4"
