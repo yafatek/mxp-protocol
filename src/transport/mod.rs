@@ -1,15 +1,18 @@
 //! MXP custom transport (work in progress)
 
+mod ack;
 mod buffer;
 mod crypto;
 mod error;
 mod handshake;
+mod loss;
 mod packet;
 mod packet_crypto;
 mod session;
 mod socket;
 mod transport;
 
+pub use ack::{AckError, AckFrame, AckRange, DEFAULT_MAX_ACK_RANGES, ReceiveHistory};
 pub use buffer::{Buffer, BufferPool};
 pub use crypto::{
     AEAD_KEY_LEN, AEAD_NONCE_LEN, AEAD_TAG_LEN, AeadKey, AeadNonce, AeadTag, CryptoError,
@@ -22,6 +25,7 @@ pub use handshake::{
     AntiReplayStore, HandshakeError, HandshakeMessage, HandshakeMessageKind, Initiator, Responder,
     ResponderOutcome, nonce_from_packet_number,
 };
+pub use loss::{AckOutcome, LossConfig, LossManager, SentPacketInfo};
 pub use packet::{Frame, FrameType, PacketFlags, PacketHeader};
 pub use packet_crypto::{DecryptedPacket, PacketCipher};
 pub use session::{SessionTicket, SessionTicketManager, TICKET_ID_LEN, TICKET_SECRET_LEN};

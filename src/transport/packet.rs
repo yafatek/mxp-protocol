@@ -3,6 +3,8 @@
 use std::convert::TryInto;
 use std::fmt;
 
+use super::ack::{AckError, AckFrame};
+
 /// Size of an encoded packet header in bytes.
 pub const HEADER_SIZE: usize = 32;
 
@@ -239,6 +241,13 @@ impl Frame {
         }
     }
 
+    /// Create an ACK frame by encoding the provided structure.
+    pub fn from_ack(frame: &AckFrame) -> Self {
+        let mut payload = Vec::new();
+        frame.encode(&mut payload);
+        Self::new(FrameType::Ack, payload)
+    }
+
     /// Frame type accessor.
     #[must_use]
     pub const fn frame_type(&self) -> FrameType {
@@ -255,5 +264,13 @@ impl Frame {
     #[must_use]
     pub fn into_payload(self) -> Vec<u8> {
         self.payload
+    }
+
+    /// Attempt to decode the payload as an ACK frame.
+    pub fn decode_ack(&self) -> Result<AckFrame, AckError> {
+        if self.frame_type != FrameType::Ack {
+            return Err(AckError::UnexpectedFrameType);
+        }
+        AckFrame::decode(&self.payload)
     }
 }
