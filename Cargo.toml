@@ -1,0 +1,79 @@
+[package]
+name = "mxp"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+authors = ["Feras <your-email@example.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yourusername/mxp-protocol"
+homepage = "https://getmxp.xyz"
+keywords = ["mxp", "agents", "ai", "protocol", "quic"]
+categories = ["network-programming", "asynchronous"]
+description = "MXP (Mesh eXchange Protocol) - High-performance protocol for agent-to-agent communication"
+
+[lib]
+name = "mxp"
+path = "src/lib.rs"
+
+[dependencies]
+# QUIC transport
+quinn = "0.11"
+rustls = { version = "0.23", features = ["ring"] }
+
+# Zero-copy and serialization
+bytes = "1.5"
+
+# Hashing
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Error handling
+thiserror = "1.0"
+
+# Tracing
+tracing = "0.1"
+
+# UUIDs for message/agent IDs
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Optional: Serialization support
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+[dev-dependencies]
+# Benchmarking
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# Property-based testing
+proptest = "1.4"
+rcgen = "0.14.5"
+
+# Testing utilities
+tokio-test = "0.4"
+
+[features]
+default = []
+serde = ["dep:serde", "uuid/serde"]
+
+[[bench]]
+name = "codec"
+harness = false
+
+[[bench]]
+name = "transport"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
+
+[profile.bench]
+inherits = "release"
+lto = "fat"
+
+[profile.dev]
+opt-level = 0
+
