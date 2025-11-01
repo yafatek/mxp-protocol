@@ -31,16 +31,16 @@ All crates live under `mxp-protocol/transport/` with internal dependencies only.
 - [x] Noise IK handshake implementation (client & server roles).
 - [x] Key derivation + AEAD sealing/unsealing (ChaCha20-Poly1305 path).
 - [x] Session ticket and anti-replay store.
-- [ ] Unit/property tests for handshake transcripts.
-- [ ] Fuzz harness for handshake message parser.
+- [x] Unit/property tests for handshake transcripts.
+- [x] Fuzz harness for handshake message parser.
 
 ### Phase 2 — Packet Engine & Reliability (Week 5-7)
-- [ ] Packet number encryption, header protection.
-- [ ] ACK frame generation/parsing with selective ranges.
-- [ ] Loss detection timers & RTT sampling.
-- [ ] Congestion control module (BBR-inspired default).
-- [ ] Anti-amplification guardrails and rate limiting.
-- [ ] Integration tests simulating loss/reorder with mock sockets.
+- [x] Packet number encryption, header protection.
+- [x] ACK frame generation/parsing with selective ranges.
+- [x] Loss detection timers & RTT sampling.
+- [x] Congestion control module (BBR-inspired default).
+- [x] Anti-amplification guardrails and rate limiting.
+- [x] Integration tests simulating loss/reorder with mock sockets.
 
 ### Phase 3 — Streams & Scheduler (Week 8-10)
 - [ ] Stream abstraction (open/data/fin) with priority metadata.

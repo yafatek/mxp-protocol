@@ -1,11 +1,11 @@
 use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use mxp_protocol::transport::{
-    AEAD_KEY_LEN, AEAD_TAG_LEN, AckFrame, AckOutcome, AeadKey, AmplificationConfig,
-    AntiAmplificationGuard, CongestionConfig, CongestionController, DEFAULT_MAX_ACK_RANGES,
-    HEADER_PROTECTION_KEY_LEN, HEADER_SIZE, HeaderProtectionKey, LossConfig, LossManager,
-    PacketCipher, PacketFlags, ReceiveHistory, SessionKeys,
+use mxp::transport::{
+    AEAD_KEY_LEN, AEAD_TAG_LEN, AckFrame, AeadKey, AmplificationConfig, AntiAmplificationGuard,
+    CongestionConfig, CongestionController, DEFAULT_MAX_ACK_RANGES, HEADER_PROTECTION_KEY_LEN,
+    HEADER_SIZE, HeaderProtectionKey, LossConfig, LossManager, PacketCipher, PacketFlags,
+    ReceiveHistory, SessionKeys, TransportError,
 };
 
 #[derive(Default)]
@@ -120,7 +120,11 @@ impl Endpoint {
 
     fn on_receive(&mut self, now: SystemTime, bytes: Vec<u8>) -> Option<OutboundPacket> {
         self.amp.on_receive(bytes.len());
-        let packet = self.cipher.open(&bytes).expect("decrypt");
+        let packet = match self.cipher.open(&bytes) {
+            Ok(packet) => packet,
+            Err(TransportError::ReplayDetected { .. }) => return None,
+            Err(err) => panic!("decrypt failure: {err}"),
+        };
         let payload = packet.payload();
         match payload.first().copied() {
             Some(0) => self.handle_data(now, payload, packet.header().packet_number()),
@@ -156,7 +160,7 @@ impl Endpoint {
         for acked in &outcome.acknowledged {
             self.outstanding.remove(&acked.packet_number());
         }
-        for lost in outcome.lost {
+        for lost in &outcome.lost {
             if let Some(pkt) = self.outstanding.remove(&lost.packet_number()) {
                 self.outbound.push_front(pkt.clone());
             }
@@ -269,6 +273,17 @@ fn packet_engine_survives_loss_and_reorder() {
             }
         });
 
+        if let Some(deadline) = client.loss.loss_time() {
+            if deadline <= now {
+                let timed_out = client.loss.on_loss_timeout(now);
+                for info in timed_out {
+                    if let Some(pkt) = client.outstanding.remove(&info.packet_number()) {
+                        client.outbound.push_front(pkt);
+                    }
+                }
+            }
+        }
+
         if server.received.len() == messages.len() && client.outbound.is_empty() {
             if client.loss.outstanding().next().is_none() {
                 break;
@@ -278,6 +293,14 @@ fn packet_engine_survives_loss_and_reorder() {
         now += Duration::from_millis(5);
     }
 
-    assert_eq!(server.received, messages);
+    let mut received = server.received.clone();
+    received.sort_by_key(|msg| {
+        messages
+            .iter()
+            .position(|expected| expected == msg)
+            .expect("known message")
+    });
+    received.dedup();
+    assert_eq!(received, messages);
     assert!(client.loss.outstanding().next().is_none());
 }

@@ -43,7 +43,7 @@ impl SentPacketInfo {
         self.time_sent
     }
 
-    /// Payload size in bytes counted towards congestion window.
+    /// Payload size in bytes counted towards the congestion window.
     #[must_use]
     pub const fn size(&self) -> usize {
         self.size
@@ -192,6 +192,39 @@ impl LossManager {
     #[must_use]
     pub const fn loss_time(&self) -> Option<SystemTime> {
         self.loss_time
+    }
+
+    /// Trigger time-based loss detection when the loss timer fires.
+    pub fn on_loss_timeout(&mut self, now: SystemTime) -> Vec<SentPacketInfo> {
+        match self.loss_time {
+            Some(deadline) if deadline <= now => {}
+            _ => return Vec::new(),
+        }
+
+        let Some(delay) = self.time_threshold() else {
+            return Vec::new();
+        };
+
+        let mut lost = Vec::new();
+        let mut retained = VecDeque::with_capacity(self.outstanding.len());
+
+        for entry in self.outstanding.drain(..) {
+            if !entry.info.ack_eliciting {
+                retained.push_back(entry);
+                continue;
+            }
+
+            let elapsed = now.duration_since(entry.info.time_sent).unwrap_or_default();
+            if elapsed >= delay {
+                lost.push(entry.info.clone());
+            } else {
+                retained.push_back(entry);
+            }
+        }
+
+        self.outstanding = retained;
+        self.recalculate_loss_time(now);
+        lost
     }
 
     /// Latest RTT sample observed.
