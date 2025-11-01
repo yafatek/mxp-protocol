@@ -43,6 +43,12 @@ impl SessionTicket {
         &self.secret
     }
 
+    /// Issued-at timestamp accessor.
+    #[must_use]
+    pub fn issued_at(&self) -> SystemTime {
+        self.issued_at
+    }
+
     /// Expiration timestamp accessor.
     #[must_use]
     pub fn expires_at(&self) -> SystemTime {

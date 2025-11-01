@@ -28,7 +28,9 @@ pub enum CryptoError {
     KeyDerivationFailed,
 }
 
-mod mixing;
+mod hkdf;
+mod hmac;
+mod sha256;
 
 fn copy_checked<const N: usize>(bytes: &[u8], on_err: CryptoError) -> Result<[u8; N], CryptoError> {
     if bytes.len() != N {
@@ -291,9 +293,16 @@ impl HandshakeState {
     }
 
     /// Inject new key material via HKDF (placeholder implementation).
-    pub fn mix_key(&mut self, material: &[u8]) {
-        mixing::xor_cycle(&mut self.chaining_key, material, 0x00);
-        mixing::rotate_add(&mut self.temp_key, &self.chaining_key, 0x42);
+    pub fn mix_key(&mut self, material: &[u8]) -> Result<(), CryptoError> {
+        let prk = hkdf::extract(&self.chaining_key, material);
+
+        let mut okm = [0u8; SHARED_SECRET_LEN + AEAD_KEY_LEN];
+        hkdf::expand(&prk, &[], &mut okm)?;
+
+        self.chaining_key.copy_from_slice(&okm[..SHARED_SECRET_LEN]);
+        self.temp_key
+            .copy_from_slice(&okm[SHARED_SECRET_LEN..SHARED_SECRET_LEN + AEAD_KEY_LEN]);
+        Ok(())
     }
 }
 
@@ -326,40 +335,27 @@ impl SessionKeys {
 
 /// Derive session keys based on the chaining key and temp key.
 pub fn derive_session_keys(
-    shared: &[u8; SHARED_SECRET_LEN],
-    local_static: &[u8; PUBLIC_KEY_LEN],
-    remote_static: &[u8; PUBLIC_KEY_LEN],
-    local_ephemeral: &[u8; PUBLIC_KEY_LEN],
-    remote_ephemeral: &[u8; PUBLIC_KEY_LEN],
+    state: &HandshakeState,
     initiator: bool,
-) -> SessionKeys {
-    let mut inputs: [&[u8]; 5] = [
-        shared,
-        local_static,
-        remote_static,
-        local_ephemeral,
-        remote_ephemeral,
-    ];
-    inputs.sort_by(|a, b| a.cmp(b));
+) -> Result<SessionKeys, CryptoError> {
+    let mut okm = [0u8; AEAD_KEY_LEN * 2];
+    hkdf::expand(state.chaining_key(), &[], &mut okm)?;
 
-    let mut base = [0u8; AEAD_KEY_LEN];
-    for (idx, byte) in base.iter_mut().enumerate() {
-        let mut acc = idx as u8;
-        for slice in inputs.iter() {
-            acc ^= slice[idx % slice.len()].rotate_left(((idx & 7) + 1) as u32);
-        }
-        *byte = acc;
-    }
-
-    let mut alternate = base;
-    for (idx, byte) in alternate.iter_mut().enumerate() {
-        *byte = byte.wrapping_add(0x5A).rotate_left(((idx & 7) + 2) as u32);
-    }
+    let mut first = [0u8; AEAD_KEY_LEN];
+    let mut second = [0u8; AEAD_KEY_LEN];
+    first.copy_from_slice(&okm[..AEAD_KEY_LEN]);
+    second.copy_from_slice(&okm[AEAD_KEY_LEN..]);
 
     if initiator {
-        SessionKeys::new(AeadKey::from_array(base), AeadKey::from_array(alternate))
+        Ok(SessionKeys::new(
+            AeadKey::from_array(first),
+            AeadKey::from_array(second),
+        ))
     } else {
-        SessionKeys::new(AeadKey::from_array(alternate), AeadKey::from_array(base))
+        Ok(SessionKeys::new(
+            AeadKey::from_array(second),
+            AeadKey::from_array(first),
+        ))
     }
 }
 

@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Metrics wiring arrives in Phase 4; silence interim warnings.
+
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 

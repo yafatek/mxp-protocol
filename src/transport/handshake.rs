@@ -127,6 +127,24 @@ impl HandshakeMessage {
     }
 }
 
+fn mix_static_prologue(
+    state: &mut HandshakeState,
+    local_public: &PublicKey,
+    remote_public: &PublicKey,
+) -> Result<(), HandshakeError> {
+    let (first, second) = if local_public.as_bytes() <= remote_public.as_bytes() {
+        (local_public.as_bytes(), remote_public.as_bytes())
+    } else {
+        (remote_public.as_bytes(), local_public.as_bytes())
+    };
+
+    let mut combined = [0u8; PUBLIC_KEY_LEN * 2];
+    combined[..PUBLIC_KEY_LEN].copy_from_slice(first);
+    combined[PUBLIC_KEY_LEN..].copy_from_slice(second);
+    state.mix_key(&combined)?;
+    Ok(())
+}
+
 /// Stages of the initiator handshake.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum InitiatorStage {
@@ -167,20 +185,20 @@ impl Initiator {
     }
 
     /// Initiate the handshake by sending the first message.
-    pub fn initiate(&mut self) -> HandshakeMessage {
+    pub fn initiate(&mut self) -> Result<HandshakeMessage, HandshakeError> {
         let local_ephemeral = self.state.local_static().derive_ephemeral(0x11);
         self.state.set_local_ephemeral(local_ephemeral.clone());
         let public_ephemeral = local_ephemeral.public_key();
 
-        // Mix remote static into a chaining key as a placeholder prologue.
-        self.state.mix_key(self.remote_static.as_bytes());
+        let local_public = self.state.local_static().public_key();
+        mix_static_prologue(&mut self.state, &local_public, &self.remote_static)?;
 
         self.stage = InitiatorStage::AwaitingResponse;
-        HandshakeMessage::new(
+        Ok(HandshakeMessage::new(
             HandshakeMessageKind::InitiatorHello,
             public_ephemeral,
             Vec::new(),
-        )
+        ))
     }
 
     /// Process the responder hello and produce the final message along with session keys.
@@ -206,28 +224,13 @@ impl Initiator {
             .ok_or(HandshakeError::MissingKeyMaterial)?;
 
         let shared = x25519_diffie_hellman(&local_ephemeral, &remote_ephemeral)?;
-        self.state.mix_key(shared.as_bytes());
+        self.state.mix_key(shared.as_bytes())?;
 
-        let local_static_pub = self.state.local_static().public_key();
-        let remote_static_pub = self
-            .state
-            .remote_static()
-            .cloned()
-            .unwrap_or(self.remote_static.clone());
-        let local_ephemeral_pub = local_ephemeral.public_key();
-
-        let session_keys = derive_session_keys(
-            shared.as_bytes(),
-            local_static_pub.as_bytes(),
-            remote_static_pub.as_bytes(),
-            local_ephemeral_pub.as_bytes(),
-            remote_ephemeral.as_bytes(),
-            true,
-        );
+        let session_keys = derive_session_keys(&self.state, true)?;
 
         // Incorporate payload into a chaining key as confirmation data.
         let payload_clone = message.payload().to_vec();
-        self.state.mix_key(&payload_clone);
+        self.state.mix_key(&payload_clone)?;
 
         let confirmation = self.make_confirmation_payload();
         let final_message = HandshakeMessage::new(
@@ -257,20 +260,23 @@ pub struct Responder {
 
 impl Responder {
     /// Create a new responder with its static key and optional peer static key.
-    #[must_use]
-    pub fn new(local_static: PrivateKey, remote_static: Option<PublicKey>) -> Self {
+    pub fn new(
+        local_static: PrivateKey,
+        remote_static: Option<PublicKey>,
+    ) -> Result<Self, HandshakeError> {
         let mut state = HandshakeState::new(local_static);
         if let Some(peer) = remote_static {
-            state.mix_key(peer.as_bytes());
+            let local_public = state.local_static().public_key();
+            mix_static_prologue(&mut state, &local_public, &peer)?;
             state.set_remote_static(peer);
         }
 
-        Self {
+        Ok(Self {
             state,
             stage: ResponderStage::Ready,
             anti_replay: AntiReplayStore::new(512, Duration::from_secs(60)),
             tickets: SessionTicketManager::new(Duration::from_secs(600), 1024),
-        }
+        })
     }
 
     /// Process the initiator hello and produce responder hello.
@@ -293,7 +299,7 @@ impl Responder {
         self.state.set_local_ephemeral(local_ephemeral.clone());
 
         let shared = x25519_diffie_hellman(&local_ephemeral, message.ephemeral())?;
-        self.state.mix_key(shared.as_bytes());
+        self.state.mix_key(shared.as_bytes())?;
 
         let mut payload = Vec::with_capacity(SHARED_SECRET_LEN);
         payload.extend_from_slice(self.state.temp_key());
@@ -320,40 +326,10 @@ impl Responder {
         self.anti_replay.record(message.payload())?;
 
         // Remote ephemeral was already set during InitiatorHello; do not overwrite.
-        let remote_ephemeral = self
-            .state
-            .remote_ephemeral()
-            .cloned()
-            .ok_or(HandshakeError::MissingKeyMaterial)?;
-
-        let local_ephemeral = self
-            .state
-            .local_ephemeral()
-            .cloned()
-            .ok_or(HandshakeError::MissingKeyMaterial)?;
-
-        let shared = x25519_diffie_hellman(&local_ephemeral, &remote_ephemeral)?;
-        self.state.mix_key(shared.as_bytes());
-
-        let local_static_pub = self.state.local_static().public_key();
-        let remote_static_pub = self
-            .state
-            .remote_static()
-            .cloned()
-            .unwrap_or_else(|| PublicKey::from_array([0u8; PUBLIC_KEY_LEN]));
-        let local_ephemeral_pub = local_ephemeral.public_key();
-
-        let session_keys = derive_session_keys(
-            shared.as_bytes(),
-            local_static_pub.as_bytes(),
-            remote_static_pub.as_bytes(),
-            local_ephemeral_pub.as_bytes(),
-            remote_ephemeral.as_bytes(),
-            false,
-        );
+        let session_keys = derive_session_keys(&self.state, false)?;
 
         let payload_clone = message.payload().to_vec();
-        self.state.mix_key(&payload_clone);
+        self.state.mix_key(&payload_clone)?;
 
         let ticket = self.tickets.issue(self.state.chaining_key());
 
@@ -456,9 +432,10 @@ mod tests {
         let responder_public = responder_static.public_key();
 
         let mut initiator = Initiator::new(initiator_static.clone(), responder_public.clone());
-        let mut responder = Responder::new(responder_static, Some(initiator_public.clone()));
+        let mut responder = Responder::new(responder_static, Some(initiator_public.clone()))
+            .expect("responder init");
 
-        let msg_init = initiator.initiate();
+        let msg_init = initiator.initiate().expect("initiator hello");
         let msg_resp = responder
             .handle_initiator_hello(&msg_init)
             .expect("responder hello");
@@ -478,6 +455,7 @@ mod tests {
             outcome.session_keys.send().as_bytes()
         );
         assert!(outcome.session_ticket.is_valid());
+        assert!(outcome.session_ticket.issued_at() <= outcome.session_ticket.expires_at());
     }
 
     #[test]
