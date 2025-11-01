@@ -28,8 +28,11 @@ pub enum CryptoError {
     KeyDerivationFailed,
 }
 
+mod aead;
+mod chacha20;
 mod hkdf;
 mod hmac;
+mod poly1305;
 mod sha256;
 
 fn copy_checked<const N: usize>(bytes: &[u8], on_err: CryptoError) -> Result<[u8; N], CryptoError> {
@@ -364,30 +367,20 @@ pub fn encrypt(
     key: &AeadKey,
     nonce: &AeadNonce,
     plaintext: &[u8],
-    _aad: &[u8],
+    aad: &[u8],
 ) -> (Vec<u8>, AeadTag) {
-    let mut ciphertext = plaintext.to_vec();
-    for (i, byte) in ciphertext.iter_mut().enumerate() {
-        *byte ^= key.as_bytes()[i % key.as_bytes().len()] ^ nonce.as_bytes()[i % AEAD_NONCE_LEN];
-    }
-    let mut tag_data = [0u8; AEAD_TAG_LEN];
-    for (i, byte) in tag_data.iter_mut().enumerate() {
-        *byte = key.as_bytes()[i % key.as_bytes().len()] ^ nonce.as_bytes()[i % AEAD_NONCE_LEN];
-    }
-    (ciphertext, AeadTag(tag_data))
+    aead::seal(key, nonce, plaintext, aad)
 }
 
-/// Decrypt payload with the session key (placeholder implementation).
+/// Decrypt payload with the session key, verifying authentication tag.
 pub fn decrypt(
     key: &AeadKey,
     nonce: &AeadNonce,
     ciphertext: &[u8],
-    _aad: &[u8],
-    _tag: &AeadTag,
+    aad: &[u8],
+    tag: &AeadTag,
 ) -> Result<Vec<u8>, CryptoError> {
-    // Since encrypt is XOR-based placeholder, decrypt is identical.
-    let (plaintext, _) = encrypt(key, nonce, ciphertext, &[]);
-    Ok(plaintext)
+    aead::open(key, nonce, ciphertext, aad, tag)
 }
 
 /// Perform a dummy X25519 key agreement (placeholder).
