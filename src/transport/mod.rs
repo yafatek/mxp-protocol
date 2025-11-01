@@ -5,6 +5,7 @@ mod anti_amplification;
 mod buffer;
 mod congestion;
 mod crypto;
+mod datagram;
 mod error;
 mod handshake;
 mod loss;
@@ -26,6 +27,10 @@ pub use crypto::{
     HEADER_PROTECTION_KEY_LEN, HEADER_PROTECTION_MASK_LEN, HEADER_PROTECTION_SAMPLE_LEN,
     HandshakeState, HeaderProtectionKey, PRIVATE_KEY_LEN, PUBLIC_KEY_LEN, PrivateKey, PublicKey,
     SHARED_SECRET_LEN, SessionKeys, SharedSecret, decrypt, encrypt, header_protection_mask,
+};
+pub use datagram::{
+    DEFAULT_DATAGRAM_MAX_PAYLOAD, DEFAULT_DATAGRAM_QUEUE, DatagramConfig, DatagramError,
+    DatagramQueue,
 };
 pub use error::TransportError;
 pub use handshake::{

@@ -316,6 +316,8 @@ impl Stream {
 pub struct StreamManager {
     _role: EndpointRole,
     streams: HashMap<StreamId, Stream>,
+    connection_limit: u64,
+    stream_limits: HashMap<StreamId, u64>,
 }
 
 impl StreamManager {
@@ -325,7 +327,30 @@ impl StreamManager {
         Self {
             _role: role,
             streams: HashMap::new(),
+            connection_limit: u64::MAX,
+            stream_limits: HashMap::new(),
         }
+    }
+
+    /// Configure the connection-level send window (MAX_DATA from peer).
+    pub fn set_connection_limit(&mut self, limit: u64) {
+        self.connection_limit = limit;
+    }
+
+    /// Configure a stream-specific send window (per-stream MAX_DATA from peer).
+    pub fn set_stream_limit(&mut self, id: StreamId, limit: u64) {
+        self.stream_limits.insert(id, limit);
+    }
+
+    /// Compute the remaining bytes that may be sent for the stream respecting connection limits.
+    #[must_use]
+    pub fn stream_send_allowance(&self, id: StreamId) -> u64 {
+        let stream_limit = self
+            .stream_limits
+            .get(&id)
+            .copied()
+            .unwrap_or(u64::MAX);
+        self.connection_limit.min(stream_limit)
     }
 
     /// Obtain a mutable reference to a stream, creating it if required.
@@ -350,8 +375,20 @@ impl StreamManager {
     }
 
     /// Pull the next send chunk from a stream.
-    pub fn poll_send_chunk(&mut self, id: StreamId, max_len: usize) -> Option<SendChunk> {
-        self.streams.get_mut(&id)?.next_send_chunk(max_len)
+    pub fn poll_send_chunk(
+        &mut self,
+        id: StreamId,
+        max_len: usize,
+    ) -> Option<SendChunk> {
+        let allowance = self.stream_send_allowance(id);
+        if allowance == 0 {
+            return None;
+        }
+        let limit = allowance.min(max_len as u64) as usize;
+        if limit == 0 {
+            return None;
+        }
+        self.streams.get_mut(&id)?.next_send_chunk(limit)
     }
 
     /// Ingest remote data for the specified stream.

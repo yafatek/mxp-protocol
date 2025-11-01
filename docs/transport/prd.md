@@ -68,6 +68,10 @@ Deliver a bespoke transport layer tailored for MXP agent communication that:
 3. **GA:** Custom transport enabled by default with QUIC fallback for one release.
 4. **Post-GA:** Explore raw-IP carrier, kernel bypass, and hardware acceleration.
 
+### Current Status (2025-11-01)
+- Phase 2 (Packet Engine & Reliability) deliverables are complete, including integration harness with loss/reorder simulation.
+- Phase 3 kicked off: foundational stream send/receive buffering merged; datagram queue with amplification guard landed; scheduler, flow control, and remaining prioritization work in flight.
+
 ## 9. Risks & Mitigations
 - **Performance shortfall:** Build perf harness early; optimize buffer management and schedulers.
 - **Security gaps:** Engage security review early; run fuzz/property testing continuously.
