@@ -459,6 +459,74 @@ mod tests {
     }
 
     #[test]
+    fn initiator_rejects_wrong_message_kind() {
+        let initiator_static = fixed_private(0x21);
+        let responder_static = fixed_private(0x63);
+        let responder_public = responder_static.public_key();
+
+        let mut initiator = Initiator::new(initiator_static.clone(), responder_public.clone());
+        let mut responder = Responder::new(responder_static, Some(initiator_static.public_key()))
+            .expect("responder init");
+
+        let msg_init = initiator.initiate().expect("initiator hello");
+        let msg_resp = responder
+            .handle_initiator_hello(&msg_init)
+            .expect("responder hello");
+
+        let bogus = HandshakeMessage::new(
+            HandshakeMessageKind::InitiatorFinish,
+            msg_resp.ephemeral().clone(),
+            msg_resp.payload().to_vec(),
+        );
+
+        let err = initiator
+            .handle_response(&bogus)
+            .expect_err("unexpected message should fail");
+        assert!(matches!(err, HandshakeError::UnexpectedMessage));
+    }
+
+    #[test]
+    fn responder_rejects_wrong_message_kind() {
+        let initiator_static = fixed_private(0x11);
+        let initiator_public = initiator_static.public_key();
+        let responder_static = fixed_private(0x51);
+        let responder_public = responder_static.public_key();
+
+        let mut initiator = Initiator::new(initiator_static, responder_public);
+        let mut responder =
+            Responder::new(responder_static, Some(initiator_public)).expect("responder init");
+
+        let msg_init = initiator.initiate().expect("initiator hello");
+        let msg_resp = responder
+            .handle_initiator_hello(&msg_init)
+            .expect("responder hello");
+        let (msg_final, _) = initiator
+            .handle_response(&msg_resp)
+            .expect("initiator finish");
+
+        let bogus = HandshakeMessage::new(
+            HandshakeMessageKind::ResponderHello,
+            msg_final.ephemeral().clone(),
+            msg_final.payload().to_vec(),
+        );
+
+        let err = responder
+            .handle_initiator_finish(&bogus)
+            .expect_err("unexpected finish should fail");
+        assert!(matches!(err, HandshakeError::UnexpectedMessage));
+    }
+
+    #[test]
+    fn anti_replay_store_rejects_duplicates() {
+        let mut store = AntiReplayStore::new(8, Duration::from_secs(10));
+        let payload = b"handshake payload";
+
+        store.record(payload).expect("first insert ok");
+        let err = store.record(payload).expect_err("replay must be rejected");
+        assert!(matches!(err, HandshakeError::ReplayDetected));
+    }
+
+    #[test]
     fn responder_session_resumption_validates_secret() {
         let mut manager = SessionTicketManager::new(Duration::from_secs(60), 4);
         let seed = [0xAAu8; SHARED_SECRET_LEN];
