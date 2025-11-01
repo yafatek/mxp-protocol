@@ -18,7 +18,7 @@ pub fn expand(prk: &[u8; HASH_LEN], info: &[u8], okm: &mut [u8]) -> Result<(), C
         return Ok(());
     }
 
-    let blocks = (okm.len() + HASH_LEN - 1) / HASH_LEN;
+    let blocks = okm.len().div_ceil(HASH_LEN);
     if blocks > MAX_BLOCKS {
         return Err(CryptoError::KeyDerivationFailed);
     }

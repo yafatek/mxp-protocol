@@ -163,7 +163,7 @@ impl LossManager {
             if ack_contains(frame, entry.info.packet_number) {
                 if acknowledged_largest
                     .as_ref()
-                    .map_or(true, |pkt| pkt.packet_number < entry.info.packet_number)
+                    .is_none_or(|pkt| pkt.packet_number < entry.info.packet_number)
                 {
                     acknowledged_largest = Some(entry.info.clone());
                 }
@@ -419,8 +419,10 @@ mod tests {
 
     #[test]
     fn packet_threshold_declares_loss() {
-        let mut config = LossConfig::default();
-        config.packet_threshold = 2;
+        let mut config = LossConfig {
+            packet_threshold: 2,
+            ..Default::default()
+        };
         let mut mgr = LossManager::new(config);
         let base = SystemTime::now();
         mgr.on_packet_sent(1, base, 1000, true);
@@ -440,8 +442,10 @@ mod tests {
 
     #[test]
     fn time_threshold_declares_loss() {
-        let mut config = LossConfig::default();
-        config.initial_rtt = Duration::from_millis(5);
+        let mut config = LossConfig {
+            initial_rtt: Duration::from_millis(5),
+            ..Default::default()
+        };
         let mut mgr = LossManager::new(config);
         let base = SystemTime::now();
         mgr.on_packet_sent(5, base, 900, true);

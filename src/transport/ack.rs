@@ -116,7 +116,8 @@ impl AckFrame {
                 end: ranges[0].end(),
             });
         }
-        let ack_delay_micros = ack_delay.as_micros().min(u64::MAX as u128) as u64;
+        let ack_delay_micros = u64::try_from(ack_delay.as_micros().min(u128::from(u64::MAX)))
+            .unwrap_or(u64::MAX);
         Ok(Self {
             largest,
             ack_delay_micros,
@@ -225,10 +226,8 @@ impl ReceiveHistory {
     /// Observation of a packet number; returns true when an immediate ACK is suggested.
     pub fn record(&mut self, packet_number: u64, ack_eliciting: bool, now: SystemTime) -> bool {
         self.insert_packet(packet_number);
-        if ack_eliciting {
-            if self.ack_request_time.is_none() {
-                self.ack_request_time = Some(now);
-            }
+        if ack_eliciting && self.ack_request_time.is_none() {
+            self.ack_request_time = Some(now);
         }
 
         self.should_ack_immediately(now)

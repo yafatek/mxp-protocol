@@ -59,13 +59,13 @@ impl U130 {
 
     fn add(self, other: U130) -> U130 {
         let (lo, carry) = self.lo.overflowing_add(other.lo);
-        let hi = self.hi + other.hi + (carry as u8);
+        let hi = self.hi + other.hi + u8::from(carry);
         U130 { lo, hi }
     }
 
     fn add_u128(self, val: u128) -> U130 {
         let (lo, carry) = self.lo.overflowing_add(val);
-        let hi = self.hi + (carry as u8);
+        let hi = self.hi + u8::from(carry);
         U130 { lo, hi }
     }
 
@@ -79,7 +79,7 @@ impl U130 {
         let (prod_lo, prod_hi) = mul_u128(self.lo, r);
 
         // Compute hi * r (this is small, hi is at most 3)
-        let hi_contrib = (self.hi as u128) * r;
+        let hi_contrib = u128::from(self.hi) * r;
 
         // Now we have: prod_lo (128 bits) + prod_hi * 2^128 + hi_contrib * 2^128
         // = prod_lo + (prod_hi + hi_contrib) * 2^128
@@ -97,11 +97,11 @@ impl U130 {
         let correction = overflow.wrapping_mul(5);
 
         let (lo, carry) = prod_lo.overflowing_add(correction);
-        let hi = hi + (carry as u8);
+        let hi = hi + u8::from(carry);
 
         // Final reduction if hi >= 4
         if hi >= 4 {
-            let extra = ((hi >> 2) as u128) * 5;
+            let extra = u128::from(hi >> 2) * 5;
             let lo = lo.wrapping_add(extra);
             U130 { lo, hi: hi & 3 }
         } else {
@@ -115,7 +115,7 @@ impl U130 {
 
         // Try adding 5
         let (test_lo, carry) = self.lo.overflowing_add(5);
-        let test_hi = self.hi.wrapping_add(carry as u8);
+        let test_hi = self.hi.wrapping_add(u8::from(carry));
 
         // If test_hi >= 4, overflow happened, meaning self + 5 >= 2^130
         // In this case, self >= 2^130 - 5, so we should use the reduced value
@@ -137,10 +137,12 @@ impl U130 {
 // Multiply two u128 values, returning (low 128 bits, high 128 bits)
 fn mul_u128(a: u128, b: u128) -> (u128, u128) {
     // Split into 64-bit parts
-    let a_lo = a as u64 as u128;
-    let a_hi = (a >> 64) as u64 as u128;
-    let b_lo = b as u64 as u128;
-    let b_hi = (b >> 64) as u64 as u128;
+    #[allow(clippy::cast_possible_truncation)]
+    let a_lo = u128::from(a as u64);
+    let a_hi = u128::from((a >> 64) as u64);
+    #[allow(clippy::cast_possible_truncation)]
+    let b_lo = u128::from(b as u64);
+    let b_hi = u128::from((b >> 64) as u64);
 
     // Compute partial products
     let p00 = a_lo * b_lo;
@@ -151,7 +153,7 @@ fn mul_u128(a: u128, b: u128) -> (u128, u128) {
     // Combine: result = p00 + (p01 << 64) + (p10 << 64) + (p11 << 128)
     let mid = p01 + p10;
     let (lo, carry) = p00.overflowing_add(mid << 64);
-    let hi = p11 + (mid >> 64) + (carry as u128);
+    let hi = p11 + (mid >> 64) + u128::from(carry);
 
     (lo, hi)
 }

@@ -18,6 +18,9 @@ mod socket;
 mod stream;
 mod transport;
 
+#[cfg(feature = "debug-tools")]
+mod debug;
+
 pub use ack::{AckError, AckFrame, AckRange, DEFAULT_MAX_ACK_RANGES, ReceiveHistory};
 pub use anti_amplification::{
     AmplificationConfig, AntiAmplificationGuard, DEFAULT_AMPLIFICATION_FACTOR,
@@ -50,3 +53,6 @@ pub use stream::{
     EndpointRole, SendChunk, Stream, StreamError, StreamId, StreamKind, StreamManager,
 };
 pub use transport::{Transport, TransportConfig, TransportHandle};
+
+#[cfg(feature = "debug-tools")]
+pub use debug::PcapRecorder;

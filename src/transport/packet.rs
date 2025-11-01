@@ -9,7 +9,7 @@ use super::stream::StreamId;
 /// Size of an encoded packet header in bytes.
 pub const HEADER_SIZE: usize = 32;
 
-/// Size of the AEAD authentication tag in bytes.
+// Size of the AEAD authentication tag in bytes.
 // pub const AUTH_TAG_SIZE: usize = 16;
 
 /// Size of the nonce carried in the header (12 bytes for ChaCha20/AES).

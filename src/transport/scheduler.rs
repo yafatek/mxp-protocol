@@ -136,6 +136,16 @@ impl Scheduler {
     }
 }
 
+impl From<PriorityClass> for SchedulerPriority {
+    fn from(value: PriorityClass) -> Self {
+        match value {
+            PriorityClass::Control => SchedulerPriority::Control,
+            PriorityClass::Interactive => SchedulerPriority::Interactive,
+            PriorityClass::Bulk => SchedulerPriority::Bulk,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -38,6 +38,7 @@ impl BufferPool {
     }
 
     /// Acquire a buffer from the pool.
+    #[must_use]
     pub fn acquire(&self) -> Buffer {
         let mut guard = self
             .inner
@@ -121,7 +122,7 @@ impl Buffer {
     /// Return the configured capacity.
     #[must_use]
     pub fn capacity(&self) -> usize {
-        self.data.as_ref().map_or(0, |data| data.len())
+        self.data.as_ref().map_or(0, Vec::len)
     }
 }
 

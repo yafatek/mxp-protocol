@@ -13,11 +13,11 @@ fn poly_key(key: &AeadKey, nonce: &AeadNonce) -> [u8; 32] {
 
 fn compute_mac(poly_key: &[u8; 32], aad: &[u8], ciphertext: &[u8]) -> [u8; 16] {
     let mut mac_data =
-        Vec::with_capacity(((aad.len() + 15) / 16) * 16 + ((ciphertext.len() + 15) / 16) * 16 + 16);
+        Vec::with_capacity(aad.len().div_ceil(16) * 16 + ciphertext.len().div_ceil(16) * 16 + 16);
 
     mac_data.extend_from_slice(aad);
     if aad.len() % 16 != 0 {
-        mac_data.resize((aad.len() + 15) / 16 * 16, 0);
+        mac_data.resize(aad.len().div_ceil(16) * 16, 0);
     }
 
     mac_data.extend_from_slice(ciphertext);

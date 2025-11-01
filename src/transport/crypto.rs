@@ -262,6 +262,7 @@ pub struct HandshakeState {
 
 impl HandshakeState {
     /// Initialize a new handshake with the local static key.
+    #[must_use]
     pub fn new(local_static: PrivateKey) -> Self {
         Self {
             local_static,
@@ -449,6 +450,7 @@ pub fn header_protection_mask(
 }
 
 /// Encrypt payload with the session key (placeholder implementation).
+#[must_use]
 pub fn encrypt(
     key: &AeadKey,
     nonce: &AeadNonce,

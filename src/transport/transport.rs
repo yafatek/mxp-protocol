@@ -4,10 +4,15 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
+#[cfg(feature = "debug-tools")]
+use std::path::PathBuf;
+
 use crate::protocol::metrics::Metrics;
 use tracing::{debug, instrument};
 
 use super::buffer::{Buffer, BufferPool};
+#[cfg(feature = "debug-tools")]
+use super::debug::PcapRecorder;
 use super::error::TransportError;
 use super::packet::PacketFlags;
 use super::packet_crypto::{DecryptedPacket, PacketCipher};
@@ -24,6 +29,12 @@ pub struct TransportConfig {
     pub read_timeout: Option<Duration>,
     /// Optional write timeout for sockets.
     pub write_timeout: Option<Duration>,
+    /// Optional PCAP capture path for outbound packets (debug builds only).
+    #[cfg(feature = "debug-tools")]
+    pub pcap_send_path: Option<PathBuf>,
+    /// Optional PCAP capture path for inbound packets (debug builds only).
+    #[cfg(feature = "debug-tools")]
+    pub pcap_recv_path: Option<PathBuf>,
 }
 
 impl Default for TransportConfig {
@@ -33,6 +44,10 @@ impl Default for TransportConfig {
             max_buffers: 1024,
             read_timeout: None,
             write_timeout: None,
+            #[cfg(feature = "debug-tools")]
+            pcap_send_path: None,
+            #[cfg(feature = "debug-tools")]
+            pcap_recv_path: None,
         }
     }
 }
@@ -47,10 +62,15 @@ pub struct TransportHandle {
 struct TransportInner {
     socket: SocketBinding,
     buffers: BufferPool,
+    #[cfg(feature = "debug-tools")]
+    pcap_send: Option<PcapRecorder>,
+    #[cfg(feature = "debug-tools")]
+    pcap_recv: Option<PcapRecorder>,
 }
 
 impl TransportHandle {
     /// Acquire a reusable buffer for outbound or inbound data.
+    #[must_use]
     pub fn acquire_buffer(&self) -> Buffer {
         self.inner.buffers.acquire()
     }
@@ -89,6 +109,12 @@ impl TransportHandle {
             .socket
             .send_to(buffer.as_slice(), addr)
             .map_err(TransportError::from)?;
+        #[cfg(feature = "debug-tools")]
+        if let Some(recorder) = &self.inner.pcap_send {
+            if let Err(err) = recorder.record(buffer.as_slice()) {
+                debug!(error = ?err, "failed to record outbound packet");
+            }
+        }
         Ok(packet_number)
     }
 
@@ -107,6 +133,12 @@ impl TransportHandle {
             .map_err(TransportError::from)?;
         buffer.set_len(len);
         let packet = buffer.as_slice();
+        #[cfg(feature = "debug-tools")]
+        if let Some(recorder) = &self.inner.pcap_recv {
+            if let Err(err) = recorder.record(packet) {
+                debug!(error = ?err, "failed to record inbound packet");
+            }
+        }
         let decrypted = cipher.open(packet)?;
         Ok((decrypted, addr))
     }
@@ -126,6 +158,7 @@ pub struct Transport {
 
 impl Transport {
     /// Create a new transport with the given configuration.
+    #[must_use]
     pub fn new(config: TransportConfig) -> Self {
         let pool = BufferPool::new(config.buffer_size, config.max_buffers);
         Self { config, pool }
@@ -142,14 +175,32 @@ impl Transport {
             socket.set_write_timeout(Some(timeout))?;
         }
         Metrics::record_connection_open();
-        Ok(self.build_handle(socket))
+        self.build_handle(socket)
     }
 
-    fn build_handle(&self, socket: SocketBinding) -> TransportHandle {
+    fn build_handle(&self, socket: SocketBinding) -> Result<TransportHandle, SocketError> {
         let buffers = self.pool.clone();
-        TransportHandle {
-            inner: Arc::new(TransportInner { socket, buffers }),
-        }
+        #[cfg(feature = "debug-tools")]
+        let pcap_send = match &self.config.pcap_send_path {
+            Some(path) => Some(PcapRecorder::create(path).map_err(SocketError::from)?),
+            None => None,
+        };
+        #[cfg(feature = "debug-tools")]
+        let pcap_recv = match &self.config.pcap_recv_path {
+            Some(path) => Some(PcapRecorder::create(path).map_err(SocketError::from)?),
+            None => None,
+        };
+
+        Ok(TransportHandle {
+            inner: Arc::new(TransportInner {
+                socket,
+                buffers,
+                #[cfg(feature = "debug-tools")]
+                pcap_send,
+                #[cfg(feature = "debug-tools")]
+                pcap_recv,
+            }),
+        })
     }
 }
 

@@ -166,86 +166,90 @@ impl Default for Sha256 {
     }
 }
 
-#[inline(always)]
+#[inline]
 fn small_sigma0(x: u32) -> u32 {
     x.rotate_right(7) ^ x.rotate_right(18) ^ (x >> 3)
 }
 
-#[inline(always)]
+#[inline]
 fn small_sigma1(x: u32) -> u32 {
     x.rotate_right(17) ^ x.rotate_right(19) ^ (x >> 10)
 }
 
-#[inline(always)]
+#[inline]
 fn big_sigma0(x: u32) -> u32 {
     x.rotate_right(2) ^ x.rotate_right(13) ^ x.rotate_right(22)
 }
 
-#[inline(always)]
+#[inline]
 fn big_sigma1(x: u32) -> u32 {
     x.rotate_right(6) ^ x.rotate_right(11) ^ x.rotate_right(25)
 }
 
-#[inline(always)]
+#[inline]
 fn choice(x: u32, y: u32, z: u32) -> u32 {
     (x & y) ^ (!x & z)
 }
 
-#[inline(always)]
+#[inline]
 fn majority(x: u32, y: u32, z: u32) -> u32 {
     (x & y) ^ (x & z) ^ (y & z)
 }
 
 fn process_block(state: &mut [u32; STATE_WORDS], block: &[u8; BLOCK_SIZE]) {
-    let mut w = [0u32; WORKSPACE_WORDS];
-    for (idx, chunk) in block.chunks_exact(4).enumerate() {
-        w[idx] = u32::from_be_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+    // Single-character variable names are standard in SHA-256 spec
+    #[allow(clippy::many_single_char_names)]
+    {
+        let mut w = [0u32; WORKSPACE_WORDS];
+        for (idx, chunk) in block.chunks_exact(4).enumerate() {
+            w[idx] = u32::from_be_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+        }
+
+        for t in 16..WORKSPACE_WORDS {
+            let s0 = small_sigma0(w[t - 15]);
+            let s1 = small_sigma1(w[t - 2]);
+            w[t] = w[t - 16]
+                .wrapping_add(s0)
+                .wrapping_add(w[t - 7])
+                .wrapping_add(s1);
+        }
+
+        let mut a = state[0];
+        let mut b = state[1];
+        let mut c = state[2];
+        let mut d = state[3];
+        let mut e = state[4];
+        let mut f = state[5];
+        let mut g = state[6];
+        let mut h = state[7];
+
+        for t in 0..WORKSPACE_WORDS {
+            let t1 = h
+                .wrapping_add(big_sigma1(e))
+                .wrapping_add(choice(e, f, g))
+                .wrapping_add(ROUND_CONSTANTS[t])
+                .wrapping_add(w[t]);
+            let t2 = big_sigma0(a).wrapping_add(majority(a, b, c));
+
+            h = g;
+            g = f;
+            f = e;
+            e = d.wrapping_add(t1);
+            d = c;
+            c = b;
+            b = a;
+            a = t1.wrapping_add(t2);
+        }
+
+        state[0] = state[0].wrapping_add(a);
+        state[1] = state[1].wrapping_add(b);
+        state[2] = state[2].wrapping_add(c);
+        state[3] = state[3].wrapping_add(d);
+        state[4] = state[4].wrapping_add(e);
+        state[5] = state[5].wrapping_add(f);
+        state[6] = state[6].wrapping_add(g);
+        state[7] = state[7].wrapping_add(h);
     }
-
-    for t in 16..WORKSPACE_WORDS {
-        let s0 = small_sigma0(w[t - 15]);
-        let s1 = small_sigma1(w[t - 2]);
-        w[t] = w[t - 16]
-            .wrapping_add(s0)
-            .wrapping_add(w[t - 7])
-            .wrapping_add(s1);
-    }
-
-    let mut a = state[0];
-    let mut b = state[1];
-    let mut c = state[2];
-    let mut d = state[3];
-    let mut e = state[4];
-    let mut f = state[5];
-    let mut g = state[6];
-    let mut h = state[7];
-
-    for t in 0..WORKSPACE_WORDS {
-        let t1 = h
-            .wrapping_add(big_sigma1(e))
-            .wrapping_add(choice(e, f, g))
-            .wrapping_add(ROUND_CONSTANTS[t])
-            .wrapping_add(w[t]);
-        let t2 = big_sigma0(a).wrapping_add(majority(a, b, c));
-
-        h = g;
-        g = f;
-        f = e;
-        e = d.wrapping_add(t1);
-        d = c;
-        c = b;
-        b = a;
-        a = t1.wrapping_add(t2);
-    }
-
-    state[0] = state[0].wrapping_add(a);
-    state[1] = state[1].wrapping_add(b);
-    state[2] = state[2].wrapping_add(c);
-    state[3] = state[3].wrapping_add(d);
-    state[4] = state[4].wrapping_add(e);
-    state[5] = state[5].wrapping_add(f);
-    state[6] = state[6].wrapping_add(g);
-    state[7] = state[7].wrapping_add(h);
 }
 
 #[cfg(test)]

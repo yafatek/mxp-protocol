@@ -82,6 +82,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::mixed_case_hex_literals)]
     fn rfc_4231_case_3() {
         let key = [0xAau8; 20];
         let data = [0xDdu8; 50];

@@ -35,6 +35,7 @@ serde = { version = "1.0.228", features = ["derive"], optional = true }
 
 [features]
 default = []
+debug-tools = []
 serde = ["dep:serde", "uuid/serde"]
 
 [profile.release]

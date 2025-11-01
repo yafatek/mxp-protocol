@@ -1,4 +1,4 @@
-//! Minimal ChaCha20 implementation supporting the IETF 96-bit nonce variant.
+//! Minimal `ChaCha20` implementation supporting the IETF 96-bit nonce variant.
 
 const CONSTANTS: [u32; 4] = [
     0x6170_7865, // "expa"
@@ -7,7 +7,7 @@ const CONSTANTS: [u32; 4] = [
     0x6b20_6574, // "te k"
 ];
 
-#[inline(always)]
+#[inline]
 fn quarter_round(state: &mut [u32; 16], a: usize, b: usize, c: usize, d: usize) {
     state[a] = state[a].wrapping_add(state[b]);
     state[d] ^= state[a];

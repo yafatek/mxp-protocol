@@ -72,6 +72,10 @@ Deliver a bespoke transport layer tailored for MXP agent communication that:
 - Phase 2 (Packet Engine & Reliability) deliverables are complete, including integration harness with loss/reorder simulation.
 - Phase 3 kicked off: foundational stream send/receive buffering merged; datagram queue with amplification guard landed; flow-control bookkeeping in place (control frames pending); scheduler module seeded with priority queues—wiring to transport loop and priority policy still in progress.
 - Phase 4 underway: tracing instrumentation added across transport/streams/loss/scheduler; connection/stream metrics counters hooked into handles, remaining metrics and tooling to follow.
+- Debug tooling feature added: optional PCAP recorders behind `debug-tools` capture outbound/inbound packets for diagnostics.
+- Phase 5 initiated: `examples/perf_baseline.rs` provides initial encode/decode/stream/scheduler metrics; full benchmarking against targets pending.
+- Runbook drafted (`docs/transport/runbook.md`) with operational checklist, monitoring signals, and incident workflow.
+- Beta rollout checklist documented (`docs/transport/beta-checklist.md`) covering canary thresholds, rollback, and communication plan.
 
 ## 9. Risks & Mitigations
 - **Performance shortfall:** Build perf harness early; optimize buffer management and schedulers.

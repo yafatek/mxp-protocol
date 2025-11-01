@@ -126,8 +126,10 @@ mod tests {
 
     #[test]
     fn budget_accounts_for_initial_allowance() {
-        let mut config = AmplificationConfig::default();
-        config.initial_allowance = 0;
+        let mut config = AmplificationConfig {
+            initial_allowance: 0,
+            ..Default::default()
+        };
         let mut guard = AntiAmplificationGuard::new(config);
         assert!(!guard.try_consume(1));
         guard.on_receive(1000);

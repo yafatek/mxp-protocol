@@ -92,7 +92,7 @@ impl HandshakeMessage {
         let kind =
             HandshakeMessageKind::from_byte(bytes[0]).ok_or(HandshakeError::MalformedMessage)?;
         let mut key_bytes = [0u8; PUBLIC_KEY_LEN];
-        key_bytes.copy_from_slice(&bytes[1..1 + PUBLIC_KEY_LEN]);
+        key_bytes.copy_from_slice(&bytes[1..=PUBLIC_KEY_LEN]);
         let payload_len =
             u16::from_le_bytes([bytes[1 + PUBLIC_KEY_LEN], bytes[1 + PUBLIC_KEY_LEN + 1]]) as usize;
         if bytes.len() < 1 + PUBLIC_KEY_LEN + 2 + payload_len {
@@ -245,7 +245,7 @@ impl Initiator {
 
     fn make_confirmation_payload(&self) -> Vec<u8> {
         let chaining = self.state.chaining_key();
-        chaining.iter().cloned().take(16).collect()
+        chaining.iter().copied().take(16).collect()
     }
 }
 

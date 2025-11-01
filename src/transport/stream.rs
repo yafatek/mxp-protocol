@@ -162,7 +162,7 @@ impl SendBuffer {
     }
 
     fn next_chunk(&mut self, max_len: usize) -> Option<SendChunk> {
-        if self.buffer.is_empty() && !(self.fin_queued && !self.fin_sent) {
+        if (self.fin_sent || !self.fin_queued) && self.buffer.is_empty() {
             return None;
         }
 
@@ -214,7 +214,7 @@ impl RecvBuffer {
             return Ok(());
         }
 
-        let entry = self.pending.entry(offset).or_insert_with(Vec::new);
+        let entry = self.pending.entry(offset).or_default();
         if entry.is_empty() {
             entry.extend_from_slice(data);
         } else if entry.as_slice() != data {
@@ -258,8 +258,7 @@ impl RecvBuffer {
 
     fn received_fin(&self) -> bool {
         self.final_offset
-            .map(|offset| self.delivered_offset + self.ready.len() as u64 >= offset)
-            .unwrap_or(false)
+            .is_some_and(|offset| self.delivered_offset + self.ready.len() as u64 >= offset)
     }
 }
 
@@ -311,11 +310,13 @@ impl Stream {
     }
 
     /// Determine whether the receive side reached EOF.
+    #[must_use]
     pub fn is_receive_finished(&self) -> bool {
         self.recv.received_fin()
     }
 
     /// Check whether the send side has no pending data/FIN.
+    #[must_use]
     pub fn is_send_drained(&self) -> bool {
         self.send.is_drained()
     }
@@ -340,12 +341,12 @@ impl StreamManager {
         }
     }
 
-    /// Configure the connection-level send window (MAX_DATA from peer).
+    /// Configure the connection-level send window (`MAX_DATA` from peer).
     pub fn set_connection_limit(&mut self, limit: u64) {
         self.flow.update_connection_limit(limit);
     }
 
-    /// Configure a stream-specific send window (per-stream MAX_DATA from peer).
+    /// Configure a stream-specific send window (per-stream `MAX_DATA` from peer).
     pub fn set_stream_limit(&mut self, id: StreamId, limit: u64) {
         self.flow.update_stream_limit(id, limit);
     }
@@ -399,9 +400,8 @@ impl StreamManager {
             return Ok(None);
         }
 
-        let stream = match self.streams.get_mut(&id) {
-            Some(stream) => stream,
-            None => return Ok(None),
+        let Some(stream) = self.streams.get_mut(&id) else {
+            return Ok(None);
         };
 
         let chunk = stream.next_send_chunk(limit);

@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use super::stream::StreamId;
+use crate::protocol::metrics::Metrics;
 
 /// Errors related to flow control bookkeeping.
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -36,7 +37,7 @@ impl FlowWindow {
         }
     }
 
-    /// Increase the window, e.g. when the peer advertises a new MAX_DATA value.
+    /// Increase the window, e.g. when the peer advertises a new `MAX_DATA` value.
     pub fn update_limit(&mut self, new_max: u64) {
         self.max_data = new_max;
         if self.consumed > self.max_data {
@@ -95,6 +96,9 @@ impl FlowController {
 
     /// Update the connection-wide limit.
     pub fn update_connection_limit(&mut self, new_limit: u64) {
+        if new_limit != self.connection.limit() {
+            Metrics::record_flow_connection_update();
+        }
         self.connection.update_limit(new_limit);
     }
 
@@ -107,7 +111,11 @@ impl FlowController {
 
     /// Update the limit for a specific stream.
     pub fn update_stream_limit(&mut self, id: StreamId, new_limit: u64) {
-        self.stream_window_mut(id).update_limit(new_limit);
+        let window = self.stream_window_mut(id);
+        if new_limit != window.limit() {
+            Metrics::record_flow_stream_update();
+        }
+        window.update_limit(new_limit);
     }
 
     /// Consume bytes from both connection-wide and stream-specific windows.
@@ -132,6 +140,7 @@ impl FlowController {
         self.stream_window_mut(id)
             .consume(amount)
             .expect("bounds checked");
+        Metrics::record_flow_consumed(amount);
         Ok(())
     }
 
@@ -155,7 +164,7 @@ impl FlowController {
         self.connection.limit()
     }
 
-    /// Reset consumption counters (e.g., after receiving MAX_DATA that surpasses current total consumption).
+    /// Reset consumption counters (e.g., after receiving `MAX_DATA` that surpasses current total consumption).
     pub fn retire_connection_consumed(&mut self, amount: u64) {
         self.connection.consumed = self.connection.consumed.saturating_sub(amount);
     }

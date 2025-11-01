@@ -71,7 +71,10 @@ impl MessageTypeCounters {
     }
 
     fn increment(&self, msg_type: MessageType) {
-        use MessageType::*;
+        use MessageType::{
+            Ack, AgentDiscover, AgentHeartbeat, AgentRegister, Call, Event, Response, StreamChunk,
+            StreamClose, StreamOpen,
+        };
 
         match msg_type {
             AgentRegister => self.agent_register.fetch_add(1, Ordering::Relaxed),
@@ -155,7 +158,7 @@ impl Metrics {
     pub(crate) fn record_latency(kind: LatencyKind, duration: Duration) {
         let nanos = duration
             .as_nanos()
-            .min(u64::MAX as u128)
+            .min(u128::from(u64::MAX))
             .try_into()
             .unwrap_or(u64::MAX);
 
@@ -247,10 +250,8 @@ impl Metrics {
             datagram_sent_bytes: DATAGRAM_SENT_BYTES.load(Ordering::Relaxed),
             scheduler_control_enqueued: SCHEDULER_CONTROL_ENQUEUED.load(Ordering::Relaxed),
             scheduler_control_dequeued: SCHEDULER_CONTROL_DEQUEUED.load(Ordering::Relaxed),
-            scheduler_interactive_enqueued: SCHEDULER_INTERACTIVE_ENQUEUED
-                .load(Ordering::Relaxed),
-            scheduler_interactive_dequeued: SCHEDULER_INTERACTIVE_DEQUEUED
-                .load(Ordering::Relaxed),
+            scheduler_interactive_enqueued: SCHEDULER_INTERACTIVE_ENQUEUED.load(Ordering::Relaxed),
+            scheduler_interactive_dequeued: SCHEDULER_INTERACTIVE_DEQUEUED.load(Ordering::Relaxed),
             scheduler_bulk_enqueued: SCHEDULER_BULK_ENQUEUED.load(Ordering::Relaxed),
             scheduler_bulk_dequeued: SCHEDULER_BULK_DEQUEUED.load(Ordering::Relaxed),
             flow_bytes_consumed: FLOW_BYTES_CONSUMED.load(Ordering::Relaxed),
@@ -319,5 +320,5 @@ fn average_microseconds(total_ns: u64, count: u64) -> Option<u64> {
     }
 
     let total_ns_u128 = u128::from(total_ns);
-    Some((total_ns_u128 / (u128::from(count) * NANOSECONDS_PER_MICROSECOND)) as u64)
+    u64::try_from(total_ns_u128 / (u128::from(count) * NANOSECONDS_PER_MICROSECOND)).ok()
 }

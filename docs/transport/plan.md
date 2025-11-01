@@ -54,16 +54,16 @@ All crates live under `mxp-protocol/transport/` with internal dependencies only.
 
 ### Phase 4 — Observability & Tooling (Week 11-12)
 - [ ] Tracing spans for connection lifecycle, retransmits, scheduler decisions *(initial spans/logs wired into transport, streams, scheduler, loss tracking)*.
-- [ ] Metrics integration with existing `Metrics` subsystem *(connection/stream counters hooked; scheduler/flow counters pending export)*.
-- [ ] Optional pcap exporter guarded by debug-only build configuration.
-- [ ] Runbook draft and troubleshooting section.
+- [ ] Metrics integration with existing `Metrics` subsystem *(connection/stream counters hooked; scheduler/flow counters exposed via snapshot)*.
+- [ ] Optional pcap exporter guarded by debug-only build configuration *(debug-tools feature writes raw packets to PCAP when paths configured; runbook guidance pending).* 
+- [ ] Runbook draft and troubleshooting section *(initial runbook committed; iterate with ops feedback).* 
 
 ### Phase 5 — Hardening & Rollout (Week 13-16)
 - [ ] Full test matrix execution (unit, property, fuzz, integration, soak).
-- [ ] Performance benchmarking vs targets (docs/transport/targets.md).
+- [ ] Performance benchmarking vs targets (docs/transport/targets.md) *(initial baseline via `examples/perf_baseline.rs`; automated tracking pending).* 
 - [ ] Security review + external audit scheduling.
-- [ ] Beta deployment to internal clusters; monitor telemetry for 14 days.
-- [ ] Customer pilot (limited partners) with fallback plan.
+- [ ] Beta deployment to internal clusters; monitor telemetry for 14 days *(checklist documented in `docs/transport/beta-checklist.md`).*
+- [ ] Customer pilot (limited partners) with fallback plan *(see beta checklist for comms template).* 
 - [ ] Decision gate for enabling custom transport by default.
 
 ## 4. Testing Alignment
