@@ -1,0 +1,17 @@
+[book]
+title = "MXP Protocol Documentation"
+authors = ["Feras"]
+language = "en"
+multilingual = false
+src = "src"
+build-dir = "book"
+
+[output.html]
+git-repository-url = "https://github.com/yafatek/mxp-protocol"
+edit-url-template = "https://github.com/yafatek/mxp-protocol/edit/main/docs/{path}"
+site-url = "/mxp-protocol/"
+
+[output.html.playground]
+editable = false
+copyable = true
+
