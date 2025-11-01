@@ -206,10 +206,26 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 See [SPEC.md](SPEC.md) for detailed security considerations.
 
+## Contributing
+
+MXP is an open protocol, and we welcome contributions:
+
+- Protocol enhancements and extensions
+- Implementations in other languages
+- Documentation improvements
+- Performance optimizations
+- Bug reports and test cases
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+
 ## License
 
 **Protocol Specification**: Public domain (CC0)  
 **Reference Implementation**: Dual-licensed under MIT OR Apache-2.0
+
+See [LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE) for details.
 
 This licensing allows:
 - Anyone to implement MXP in any language
