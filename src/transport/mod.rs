@@ -13,8 +13,9 @@ mod transport;
 pub use buffer::{Buffer, BufferPool};
 pub use crypto::{
     AEAD_KEY_LEN, AEAD_NONCE_LEN, AEAD_TAG_LEN, AeadKey, AeadNonce, AeadTag, CryptoError,
-    HandshakeState, PRIVATE_KEY_LEN, PUBLIC_KEY_LEN, PrivateKey, PublicKey, SHARED_SECRET_LEN,
-    SessionKeys, SharedSecret, decrypt, encrypt,
+    HEADER_PROTECTION_KEY_LEN, HEADER_PROTECTION_MASK_LEN, HEADER_PROTECTION_SAMPLE_LEN,
+    HandshakeState, HeaderProtectionKey, PRIVATE_KEY_LEN, PUBLIC_KEY_LEN, PrivateKey, PublicKey,
+    SHARED_SECRET_LEN, SessionKeys, SharedSecret, decrypt, encrypt, header_protection_mask,
 };
 pub use error::TransportError;
 pub use handshake::{

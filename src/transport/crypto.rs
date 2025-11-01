@@ -12,6 +12,12 @@ pub const AEAD_KEY_LEN: usize = 32;
 pub const AEAD_NONCE_LEN: usize = 12;
 /// Length of AEAD authentication tags in bytes.
 pub const AEAD_TAG_LEN: usize = 16;
+/// Length of header protection keys in bytes (ChaCha20-based).
+pub const HEADER_PROTECTION_KEY_LEN: usize = 32;
+/// Number of bytes sampled from ciphertext for header protection masking.
+pub const HEADER_PROTECTION_SAMPLE_LEN: usize = 16;
+/// Length of the derived header protection mask (1 byte for flags, 8 for packet number).
+pub const HEADER_PROTECTION_MASK_LEN: usize = 9;
 
 /// Error type for cryptographic operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -159,6 +165,29 @@ impl AeadKey {
     /// Borrow as bytes.
     #[must_use]
     pub fn as_bytes(&self) -> &[u8; AEAD_KEY_LEN] {
+        &self.0
+    }
+}
+
+/// Header protection key used to obfuscate packet numbers and flags.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct HeaderProtectionKey([u8; HEADER_PROTECTION_KEY_LEN]);
+
+impl HeaderProtectionKey {
+    /// Construct from a fixed-size array.
+    #[must_use]
+    pub const fn from_array(bytes: [u8; HEADER_PROTECTION_KEY_LEN]) -> Self {
+        Self(bytes)
+    }
+
+    /// Construct from raw bytes.
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, CryptoError> {
+        Ok(Self(copy_checked(bytes, CryptoError::InvalidKeyLength)?))
+    }
+
+    /// Borrow as bytes.
+    #[must_use]
+    pub fn as_bytes(&self) -> &[u8; HEADER_PROTECTION_KEY_LEN] {
         &self.0
     }
 }
@@ -314,13 +343,25 @@ impl HandshakeState {
 pub struct SessionKeys {
     send: AeadKey,
     receive: AeadKey,
+    send_hp: HeaderProtectionKey,
+    receive_hp: HeaderProtectionKey,
 }
 
 impl SessionKeys {
     /// Construct a new key pair.
     #[must_use]
-    pub fn new(send: AeadKey, receive: AeadKey) -> Self {
-        Self { send, receive }
+    pub fn new(
+        send: AeadKey,
+        receive: AeadKey,
+        send_hp: HeaderProtectionKey,
+        receive_hp: HeaderProtectionKey,
+    ) -> Self {
+        Self {
+            send,
+            receive,
+            send_hp,
+            receive_hp,
+        }
     }
 
     /// Access the key used for sending messages.
@@ -334,6 +375,18 @@ impl SessionKeys {
     pub fn receive(&self) -> &AeadKey {
         &self.receive
     }
+
+    /// Access the header protection key for outbound packets.
+    #[must_use]
+    pub fn send_hp(&self) -> &HeaderProtectionKey {
+        &self.send_hp
+    }
+
+    /// Access the header protection key for inbound packets.
+    #[must_use]
+    pub fn receive_hp(&self) -> &HeaderProtectionKey {
+        &self.receive_hp
+    }
 }
 
 /// Derive session keys based on the chaining key and temp key.
@@ -341,25 +394,58 @@ pub fn derive_session_keys(
     state: &HandshakeState,
     initiator: bool,
 ) -> Result<SessionKeys, CryptoError> {
-    let mut okm = [0u8; AEAD_KEY_LEN * 2];
+    let mut okm = [0u8; AEAD_KEY_LEN * 2 + HEADER_PROTECTION_KEY_LEN * 2];
     hkdf::expand(state.chaining_key(), &[], &mut okm)?;
 
-    let mut first = [0u8; AEAD_KEY_LEN];
-    let mut second = [0u8; AEAD_KEY_LEN];
-    first.copy_from_slice(&okm[..AEAD_KEY_LEN]);
-    second.copy_from_slice(&okm[AEAD_KEY_LEN..]);
+    let mut offset = 0;
+
+    let mut first_aead = [0u8; AEAD_KEY_LEN];
+    first_aead.copy_from_slice(&okm[offset..offset + AEAD_KEY_LEN]);
+    offset += AEAD_KEY_LEN;
+
+    let mut second_aead = [0u8; AEAD_KEY_LEN];
+    second_aead.copy_from_slice(&okm[offset..offset + AEAD_KEY_LEN]);
+    offset += AEAD_KEY_LEN;
+
+    let mut first_hp = [0u8; HEADER_PROTECTION_KEY_LEN];
+    first_hp.copy_from_slice(&okm[offset..offset + HEADER_PROTECTION_KEY_LEN]);
+    offset += HEADER_PROTECTION_KEY_LEN;
+
+    let mut second_hp = [0u8; HEADER_PROTECTION_KEY_LEN];
+    second_hp.copy_from_slice(&okm[offset..offset + HEADER_PROTECTION_KEY_LEN]);
 
     if initiator {
         Ok(SessionKeys::new(
-            AeadKey::from_array(first),
-            AeadKey::from_array(second),
+            AeadKey::from_array(first_aead),
+            AeadKey::from_array(second_aead),
+            HeaderProtectionKey::from_array(first_hp),
+            HeaderProtectionKey::from_array(second_hp),
         ))
     } else {
         Ok(SessionKeys::new(
-            AeadKey::from_array(second),
-            AeadKey::from_array(first),
+            AeadKey::from_array(second_aead),
+            AeadKey::from_array(first_aead),
+            HeaderProtectionKey::from_array(second_hp),
+            HeaderProtectionKey::from_array(first_hp),
         ))
     }
+}
+
+/// Derive a header protection mask from sampled ciphertext bytes.
+#[must_use]
+pub fn header_protection_mask(
+    key: &HeaderProtectionKey,
+    sample: &[u8; HEADER_PROTECTION_SAMPLE_LEN],
+) -> [u8; HEADER_PROTECTION_MASK_LEN] {
+    let mut nonce = [0u8; AEAD_NONCE_LEN];
+    nonce.copy_from_slice(
+        &sample[HEADER_PROTECTION_SAMPLE_LEN - AEAD_NONCE_LEN..HEADER_PROTECTION_SAMPLE_LEN],
+    );
+
+    let block = chacha20::chacha20_block(key.as_bytes(), 0, &nonce);
+    let mut mask = [0u8; HEADER_PROTECTION_MASK_LEN];
+    mask.copy_from_slice(&block[..HEADER_PROTECTION_MASK_LEN]);
+    mask
 }
 
 /// Encrypt payload with the session key (placeholder implementation).
