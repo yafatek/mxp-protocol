@@ -5,6 +5,9 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use super::buffer::{Buffer, BufferPool};
+use super::error::TransportError;
+use super::packet::PacketFlags;
+use super::packet_crypto::{DecryptedPacket, PacketCipher};
 use super::socket::{SocketBinding, SocketError};
 
 /// Transport configuration options.
@@ -60,6 +63,45 @@ impl TransportHandle {
         let (len, addr) = self.inner.socket.recv_from(raw)?;
         buffer.set_len(len);
         Ok((len, addr))
+    }
+
+    /// Seal and send an encrypted packet using the provided cipher state.
+    pub fn send_packet(
+        &self,
+        cipher: &mut PacketCipher,
+        conn_id: u64,
+        flags: PacketFlags,
+        payload: &[u8],
+        addr: SocketAddr,
+        buffer: &mut Buffer,
+    ) -> Result<u64, TransportError> {
+        buffer.reset();
+        let (packet_number, total_len) =
+            cipher.seal_into(conn_id, flags, payload, buffer.as_mut_slice())?;
+        buffer.set_len(total_len);
+        self.inner
+            .socket
+            .send_to(buffer.as_slice(), addr)
+            .map_err(TransportError::from)?;
+        Ok(packet_number)
+    }
+
+    /// Receive and decrypt a packet into plaintext payload using the provided cipher.
+    pub fn receive_packet(
+        &self,
+        cipher: &mut PacketCipher,
+        buffer: &mut Buffer,
+    ) -> Result<(DecryptedPacket, SocketAddr), TransportError> {
+        buffer.reset();
+        let (len, addr) = self
+            .inner
+            .socket
+            .recv_from(buffer.as_mut_slice())
+            .map_err(TransportError::from)?;
+        buffer.set_len(len);
+        let packet = buffer.as_slice();
+        let decrypted = cipher.open(packet)?;
+        Ok((decrypted, addr))
     }
 
     /// Expose the local socket address.

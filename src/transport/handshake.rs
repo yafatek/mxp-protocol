@@ -415,7 +415,6 @@ mod tests {
     use super::*;
     use crate::transport::crypto::AeadKey;
     use crate::transport::{AEAD_KEY_LEN, PRIVATE_KEY_LEN};
-
     fn fixed_private(seed: u8) -> PrivateKey {
         let mut bytes = [0u8; PRIVATE_KEY_LEN];
         for (idx, byte) in bytes.iter_mut().enumerate() {
@@ -524,6 +523,86 @@ mod tests {
         store.record(payload).expect("first insert ok");
         let err = store.record(payload).expect_err("replay must be rejected");
         assert!(matches!(err, HandshakeError::ReplayDetected));
+    }
+
+    struct FuzzRng(u64);
+
+    impl FuzzRng {
+        const fn new(seed: u64) -> Self {
+            Self(seed)
+        }
+
+        fn next_u64(&mut self) -> u64 {
+            let mut x = self.0;
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            self.0 = x;
+            x
+        }
+
+        fn next_byte(&mut self) -> u8 {
+            (self.next_u64() & 0xFF) as u8
+        }
+
+        fn fill(&mut self, buf: &mut [u8]) {
+            for byte in buf {
+                *byte = self.next_byte();
+            }
+        }
+
+        fn bytes(&mut self, len: usize) -> Vec<u8> {
+            let mut buf = vec![0u8; len];
+            self.fill(&mut buf);
+            buf
+        }
+    }
+
+    #[test]
+    fn handshake_decode_fuzz_random_inputs() {
+        const FUZZ_ITERS: usize = 2048;
+        let mut rng = FuzzRng::new(0xBEEF_F00D_CAFEu64);
+        for _ in 0..FUZZ_ITERS {
+            let len = usize::from(rng.next_byte() % 96);
+            let data = rng.bytes(len);
+            let _ = HandshakeMessage::decode(&data);
+        }
+    }
+
+    #[test]
+    fn handshake_decode_fuzz_mutations() {
+        const FUZZ_ITERS: usize = 1024;
+
+        let initiator_static = fixed_private(0x33);
+        let responder_static = fixed_private(0x77);
+        let responder_public = responder_static.public_key();
+
+        let mut initiator = Initiator::new(initiator_static, responder_public);
+        let hello = initiator.initiate().expect("hello");
+        let base = hello.encode();
+        let mut rng = FuzzRng::new(0xDEAD_D00Du64);
+
+        for _ in 0..FUZZ_ITERS {
+            let mut mutated = base.clone();
+
+            match rng.next_byte() % 3 {
+                0 if !mutated.is_empty() => {
+                    let idx = usize::from(rng.next_byte()) % mutated.len();
+                    mutated[idx] ^= rng.next_byte();
+                }
+                1 if mutated.len() > 1 => {
+                    let new_len = usize::from(rng.next_byte()) % mutated.len();
+                    mutated.truncate(new_len);
+                }
+                2 => {
+                    let extra_len = usize::from(rng.next_byte() % 16);
+                    mutated.extend_from_slice(&rng.bytes(extra_len));
+                }
+                _ => {}
+            }
+
+            let _ = HandshakeMessage::decode(&mutated);
+        }
     }
 
     #[test]
