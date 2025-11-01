@@ -1,5 +1,6 @@
-use criterion::{Criterion, Throughput, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use mxp::{Message, MessageType};
+use std::hint::black_box;
 
 fn bench_encode(c: &mut Criterion) {
     let mut group = c.benchmark_group("codec");
