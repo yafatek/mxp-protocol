@@ -213,11 +213,12 @@ This licensing allows:
 
 ## Resources
 
-- **Specification**: [SPEC.md](SPEC.md)
-- **Documentation**: [docs.rs/mxp](https://docs.rs/mxp)
-- **Examples**: [examples/](examples/)
-- **Website**: [getmxp.xyz](https://getmxp.xyz)
-- **Crates.io**: [crates.io/crates/mxp](https://crates.io/crates/mxp)
+- **Technical Documentation**: [docs.getmxp.xyz](https://yafatek.github.io/mxp-protocol/) - Complete protocol guide
+- **Specification**: [SPEC.md](SPEC.md) - Wire format specification
+- **API Documentation**: [docs.rs/mxp](https://docs.rs/mxp) - Rust API reference
+- **Examples**: [examples/](examples/) - Working code examples
+- **Website**: [getmxp.xyz](https://getmxp.xyz) - Protocol overview
+- **Crates.io**: [crates.io/crates/mxp](https://crates.io/crates/mxp) - Published crate
 
 ## Status
 

@@ -5,7 +5,7 @@
 use bytes::Bytes;
 use xxhash_rust::xxh3::xxh3_64;
 
-use super::{Error, Message, MessageHeader, Result, CHECKSUM_SIZE, HEADER_SIZE, MIN_MESSAGE_SIZE};
+use super::{CHECKSUM_SIZE, Error, HEADER_SIZE, MIN_MESSAGE_SIZE, Message, MessageHeader, Result};
 
 /// Encode a message to bytes
 ///

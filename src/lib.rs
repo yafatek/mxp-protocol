@@ -41,7 +41,7 @@ pub mod protocol;
 pub mod transport;
 
 pub use protocol::{
-    Error, Flags, Message, MessageHeader, MessageType, Result, MAGIC_NUMBER, MAX_PAYLOAD_SIZE,
+    Error, Flags, MAGIC_NUMBER, MAX_PAYLOAD_SIZE, Message, MessageHeader, MessageType, Result,
 };
 pub use transport::{Connection, Endpoint};
 

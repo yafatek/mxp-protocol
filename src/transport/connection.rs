@@ -134,7 +134,7 @@ impl Connection {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{transport::Endpoint, MessageType};
+    use crate::{MessageType, transport::Endpoint};
 
     async fn setup_test_connection() -> Result<(Connection, Connection)> {
         // Install crypto provider for tests

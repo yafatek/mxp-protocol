@@ -2,7 +2,7 @@
 //!
 //! The header is 32 bytes and cache-aligned for performance.
 
-use super::{Flags, MessageType, MAGIC_NUMBER};
+use super::{Flags, MAGIC_NUMBER, MessageType};
 
 /// MXP message header (32 bytes, cache-aligned)
 ///
