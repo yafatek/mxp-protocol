@@ -24,6 +24,7 @@ xxhash-rust = { version = "0.8.15", features = ["xxh3"] }
 
 # Error handling
 thiserror = "2.0.17"
+tracing = "0.1"
 
 # UUIDs for message/agent IDs
 uuid = { version = "1.18.1", features = ["v4", "serde"] }

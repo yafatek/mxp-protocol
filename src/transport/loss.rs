@@ -4,6 +4,7 @@ use crate::transport::ack::AckFrame;
 use core::cmp::Ordering;
 use std::collections::VecDeque;
 use std::time::{Duration, SystemTime};
+use tracing::{debug, trace};
 
 /// Information about a sent packet retained for loss detection.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -136,6 +137,10 @@ impl LossManager {
         size: usize,
         ack_eliciting: bool,
     ) {
+        trace!(
+            packet_number,
+            size, ack_eliciting, "loss tracker observe sent packet"
+        );
         let info = SentPacketInfo::new(packet_number, time_sent, size, ack_eliciting);
         self.outstanding.push_back(SentPacketInternal { info });
         if ack_eliciting {
@@ -145,6 +150,10 @@ impl LossManager {
 
     /// Process an ACK frame received at `now`, returning ACK/loss outcomes.
     pub fn on_ack_frame(&mut self, frame: &AckFrame, now: SystemTime) -> AckOutcome {
+        debug!(
+            largest = frame.largest(),
+            "loss tracker processing ACK frame"
+        );
         let mut outcome = AckOutcome::default();
 
         let mut retained = VecDeque::with_capacity(self.outstanding.len());
@@ -216,6 +225,10 @@ impl LossManager {
 
             let elapsed = now.duration_since(entry.info.time_sent).unwrap_or_default();
             if elapsed >= delay {
+                debug!(
+                    packet_number = entry.info.packet_number(),
+                    "loss via explicit timeout"
+                );
                 lost.push(entry.info.clone());
             } else {
                 retained.push_back(entry);
@@ -280,12 +293,20 @@ impl LossManager {
             if largest_acked >= entry.info.packet_number
                 && largest_acked - entry.info.packet_number >= threshold
             {
+                debug!(
+                    packet_number = entry.info.packet_number(),
+                    "loss via packet threshold"
+                );
                 lost.push(entry.info.clone());
                 continue;
             }
 
             if let Some(delay) = loss_delay {
                 if now.duration_since(entry.info.time_sent).unwrap_or_default() >= delay {
+                    debug!(
+                        packet_number = entry.info.packet_number(),
+                        "loss via time threshold"
+                    );
                     lost.push(entry.info.clone());
                     continue;
                 }

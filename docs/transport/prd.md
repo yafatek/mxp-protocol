@@ -71,6 +71,7 @@ Deliver a bespoke transport layer tailored for MXP agent communication that:
 ### Current Status (2025-11-01)
 - Phase 2 (Packet Engine & Reliability) deliverables are complete, including integration harness with loss/reorder simulation.
 - Phase 3 kicked off: foundational stream send/receive buffering merged; datagram queue with amplification guard landed; flow-control bookkeeping in place (control frames pending); scheduler module seeded with priority queues—wiring to transport loop and priority policy still in progress.
+- Phase 4 underway: tracing instrumentation added across transport/streams/loss/scheduler; connection/stream metrics counters hooked into handles, remaining metrics and tooling to follow.
 
 ## 9. Risks & Mitigations
 - **Performance shortfall:** Build perf harness early; optimize buffer management and schedulers.

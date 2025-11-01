@@ -319,3 +319,27 @@ impl Frame {
         Ok(u64::from_le_bytes(self.payload[0..8].try_into().unwrap()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::transport::stream::{EndpointRole, StreamKind};
+
+    #[test]
+    fn stream_max_data_roundtrip() {
+        let stream = StreamId::new(EndpointRole::Client, StreamKind::Bidirectional, 3);
+        let frame = Frame::stream_max_data(stream, 512);
+        assert_eq!(frame.frame_type(), FrameType::StreamMaxData);
+        let (decoded, limit) = frame.decode_stream_max_data().expect("decode");
+        assert_eq!(decoded, stream);
+        assert_eq!(limit, 512);
+    }
+
+    #[test]
+    fn connection_max_data_roundtrip() {
+        let frame = Frame::connection_max_data(2048);
+        assert_eq!(frame.frame_type(), FrameType::ConnectionMaxData);
+        let limit = frame.decode_connection_max_data().expect("decode");
+        assert_eq!(limit, 2048);
+    }
+}

@@ -3,9 +3,11 @@
 use std::collections::VecDeque;
 
 use super::anti_amplification::AntiAmplificationGuard;
+use crate::protocol::metrics::Metrics;
 
 #[cfg(test)]
 use super::anti_amplification::AmplificationConfig;
+use tracing::trace;
 
 /// Default maximum datagram payload size (bytes).
 pub const DEFAULT_DATAGRAM_MAX_PAYLOAD: usize = 1200;
@@ -79,6 +81,12 @@ impl DatagramQueue {
                 capacity: self.config.max_queue,
             });
         }
+        trace!(
+            len = payload.len(),
+            queued = self.queue.len(),
+            "enqueue datagram payload"
+        );
+        Metrics::record_datagram_enqueued(payload.len());
         self.queue.push_back(payload);
         Ok(())
     }
@@ -99,6 +107,8 @@ impl DatagramQueue {
     pub fn dequeue_with_guard(&mut self, guard: &mut AntiAmplificationGuard) -> Option<Vec<u8>> {
         let payload = self.queue.front()?;
         if guard.try_consume(payload.len()) {
+            trace!(len = payload.len(), "dequeue datagram payload");
+            Metrics::record_datagram_sent(payload.len());
             self.queue.pop_front()
         } else {
             None

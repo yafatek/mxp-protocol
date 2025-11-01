@@ -19,6 +19,22 @@ static SEND_LATENCY_MAX_NS: AtomicU64 = AtomicU64::new(0);
 static RECV_LATENCY_TOTAL_NS: AtomicU64 = AtomicU64::new(0);
 static RECV_LATENCY_MAX_NS: AtomicU64 = AtomicU64::new(0);
 
+static DATAGRAM_ENQUEUED: AtomicU64 = AtomicU64::new(0);
+static DATAGRAM_ENQUEUED_BYTES: AtomicU64 = AtomicU64::new(0);
+static DATAGRAM_SENT: AtomicU64 = AtomicU64::new(0);
+static DATAGRAM_SENT_BYTES: AtomicU64 = AtomicU64::new(0);
+
+static FLOW_BYTES_CONSUMED: AtomicU64 = AtomicU64::new(0);
+static FLOW_CONNECTION_UPDATES: AtomicU64 = AtomicU64::new(0);
+static FLOW_STREAM_UPDATES: AtomicU64 = AtomicU64::new(0);
+
+static SCHEDULER_CONTROL_ENQUEUED: AtomicU64 = AtomicU64::new(0);
+static SCHEDULER_CONTROL_DEQUEUED: AtomicU64 = AtomicU64::new(0);
+static SCHEDULER_INTERACTIVE_ENQUEUED: AtomicU64 = AtomicU64::new(0);
+static SCHEDULER_INTERACTIVE_DEQUEUED: AtomicU64 = AtomicU64::new(0);
+static SCHEDULER_BULK_ENQUEUED: AtomicU64 = AtomicU64::new(0);
+static SCHEDULER_BULK_DEQUEUED: AtomicU64 = AtomicU64::new(0);
+
 const NANOSECONDS_PER_MICROSECOND: u128 = 1_000;
 
 struct MessageTypeCounters {
@@ -87,6 +103,14 @@ pub(crate) enum MessageDirection {
     Received,
 }
 
+/// Scheduler priority classes for metrics.
+#[derive(Clone, Copy)]
+pub enum SchedulerPriority {
+    Control,
+    Interactive,
+    Bulk,
+}
+
 impl Metrics {
     #[inline]
     pub(crate) fn record_message(direction: MessageDirection, msg_type: MessageType) {
@@ -148,6 +172,63 @@ impl Metrics {
     }
 
     #[inline]
+    pub(crate) fn record_datagram_enqueued(len: usize) {
+        DATAGRAM_ENQUEUED.fetch_add(1, Ordering::Relaxed);
+        DATAGRAM_ENQUEUED_BYTES.fetch_add(len as u64, Ordering::Relaxed);
+    }
+
+    #[inline]
+    pub(crate) fn record_datagram_sent(len: usize) {
+        DATAGRAM_SENT.fetch_add(1, Ordering::Relaxed);
+        DATAGRAM_SENT_BYTES.fetch_add(len as u64, Ordering::Relaxed);
+    }
+
+    #[inline]
+    pub(crate) fn record_flow_consumed(bytes: u64) {
+        FLOW_BYTES_CONSUMED.fetch_add(bytes, Ordering::Relaxed);
+    }
+
+    #[inline]
+    pub(crate) fn record_flow_connection_update() {
+        FLOW_CONNECTION_UPDATES.fetch_add(1, Ordering::Relaxed);
+    }
+
+    #[inline]
+    pub(crate) fn record_flow_stream_update() {
+        FLOW_STREAM_UPDATES.fetch_add(1, Ordering::Relaxed);
+    }
+
+    #[inline]
+    pub(crate) fn record_scheduler_enqueue(priority: SchedulerPriority) {
+        match priority {
+            SchedulerPriority::Control => {
+                SCHEDULER_CONTROL_ENQUEUED.fetch_add(1, Ordering::Relaxed);
+            }
+            SchedulerPriority::Interactive => {
+                SCHEDULER_INTERACTIVE_ENQUEUED.fetch_add(1, Ordering::Relaxed);
+            }
+            SchedulerPriority::Bulk => {
+                SCHEDULER_BULK_ENQUEUED.fetch_add(1, Ordering::Relaxed);
+            }
+        }
+    }
+
+    #[inline]
+    pub(crate) fn record_scheduler_dequeue(priority: SchedulerPriority) {
+        match priority {
+            SchedulerPriority::Control => {
+                SCHEDULER_CONTROL_DEQUEUED.fetch_add(1, Ordering::Relaxed);
+            }
+            SchedulerPriority::Interactive => {
+                SCHEDULER_INTERACTIVE_DEQUEUED.fetch_add(1, Ordering::Relaxed);
+            }
+            SchedulerPriority::Bulk => {
+                SCHEDULER_BULK_DEQUEUED.fetch_add(1, Ordering::Relaxed);
+            }
+        }
+    }
+
+    #[inline]
     pub(crate) fn totals() -> MetricsSnapshot {
         MetricsSnapshot {
             total_messages: TOTAL_MESSAGES.load(Ordering::Relaxed),
@@ -160,6 +241,21 @@ impl Metrics {
             send_latency_max_ns: SEND_LATENCY_MAX_NS.load(Ordering::Relaxed),
             recv_latency_total_ns: RECV_LATENCY_TOTAL_NS.load(Ordering::Relaxed),
             recv_latency_max_ns: RECV_LATENCY_MAX_NS.load(Ordering::Relaxed),
+            datagram_enqueued: DATAGRAM_ENQUEUED.load(Ordering::Relaxed),
+            datagram_enqueued_bytes: DATAGRAM_ENQUEUED_BYTES.load(Ordering::Relaxed),
+            datagram_sent: DATAGRAM_SENT.load(Ordering::Relaxed),
+            datagram_sent_bytes: DATAGRAM_SENT_BYTES.load(Ordering::Relaxed),
+            scheduler_control_enqueued: SCHEDULER_CONTROL_ENQUEUED.load(Ordering::Relaxed),
+            scheduler_control_dequeued: SCHEDULER_CONTROL_DEQUEUED.load(Ordering::Relaxed),
+            scheduler_interactive_enqueued: SCHEDULER_INTERACTIVE_ENQUEUED
+                .load(Ordering::Relaxed),
+            scheduler_interactive_dequeued: SCHEDULER_INTERACTIVE_DEQUEUED
+                .load(Ordering::Relaxed),
+            scheduler_bulk_enqueued: SCHEDULER_BULK_ENQUEUED.load(Ordering::Relaxed),
+            scheduler_bulk_dequeued: SCHEDULER_BULK_DEQUEUED.load(Ordering::Relaxed),
+            flow_bytes_consumed: FLOW_BYTES_CONSUMED.load(Ordering::Relaxed),
+            flow_connection_updates: FLOW_CONNECTION_UPDATES.load(Ordering::Relaxed),
+            flow_stream_updates: FLOW_STREAM_UPDATES.load(Ordering::Relaxed),
         }
     }
 }
@@ -188,6 +284,19 @@ pub struct MetricsSnapshot {
     pub send_latency_max_ns: u64,
     pub recv_latency_total_ns: u64,
     pub recv_latency_max_ns: u64,
+    pub datagram_enqueued: u64,
+    pub datagram_enqueued_bytes: u64,
+    pub datagram_sent: u64,
+    pub datagram_sent_bytes: u64,
+    pub scheduler_control_enqueued: u64,
+    pub scheduler_control_dequeued: u64,
+    pub scheduler_interactive_enqueued: u64,
+    pub scheduler_interactive_dequeued: u64,
+    pub scheduler_bulk_enqueued: u64,
+    pub scheduler_bulk_dequeued: u64,
+    pub flow_bytes_consumed: u64,
+    pub flow_connection_updates: u64,
+    pub flow_stream_updates: u64,
 }
 
 impl MetricsSnapshot {

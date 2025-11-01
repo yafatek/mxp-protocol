@@ -2,6 +2,9 @@
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 
+use crate::protocol::metrics::Metrics;
+use tracing::{debug, instrument, trace};
+
 use super::flow::{FlowControlError, FlowController};
 
 /// Direction of stream initiation relative to the local endpoint.
@@ -270,6 +273,7 @@ pub struct Stream {
 
 impl Stream {
     fn new(id: StreamId) -> Self {
+        trace!(stream = id.as_u64(), "creating stream");
         Self {
             _id: id,
             send: SendBuffer::default(),
@@ -278,21 +282,25 @@ impl Stream {
     }
 
     /// Queue application data for transmission.
+    #[instrument(level = "trace", skip(self, data))]
     pub fn queue_send(&mut self, data: &[u8]) -> Result<(), StreamError> {
         self.send.queue(data)
     }
 
     /// Signal end-of-stream from local side.
+    #[instrument(level = "trace", skip(self))]
     pub fn finish(&mut self) -> Result<(), StreamError> {
         self.send.queue_fin()
     }
 
     /// Fetch next chunk for transmission respecting `max_len`.
+    #[instrument(level = "trace", skip(self))]
     pub fn next_send_chunk(&mut self, max_len: usize) -> Option<SendChunk> {
         self.send.next_chunk(max_len)
     }
 
     /// Write inbound data at a given offset.
+    #[instrument(level = "trace", skip(self, data))]
     pub fn ingest(&mut self, offset: u64, data: &[u8], fin: bool) -> Result<(), StreamError> {
         self.recv.ingest(offset, data, fin)
     }
@@ -350,10 +358,14 @@ impl StreamManager {
 
     /// Obtain a mutable reference to a stream, creating it if required.
     pub fn get_or_create(&mut self, id: StreamId) -> &mut Stream {
+        if !self.streams.contains_key(&id) {
+            Metrics::record_stream_open();
+        }
         self.streams.entry(id).or_insert_with(|| Stream::new(id))
     }
 
     /// Queue application data on a particular stream.
+    #[instrument(level = "debug", skip(self, data))]
     pub fn queue_send(&mut self, id: StreamId, data: &[u8]) -> Result<(), StreamError> {
         self.streams
             .get_mut(&id)
@@ -362,6 +374,7 @@ impl StreamManager {
     }
 
     /// Queue a FIN marker on the stream.
+    #[instrument(level = "debug", skip(self))]
     pub fn finish(&mut self, id: StreamId) -> Result<(), StreamError> {
         self.streams
             .get_mut(&id)
@@ -396,6 +409,12 @@ impl StreamManager {
             if !chunk.payload.is_empty() {
                 self.flow.consume(id, chunk.payload.len() as u64)?;
             }
+            debug!(
+                stream = id.as_u64(),
+                len = chunk.payload.len(),
+                fin = chunk.fin,
+                "emit stream chunk"
+            );
         }
         Ok(chunk)
     }
@@ -408,10 +427,12 @@ impl StreamManager {
         data: &[u8],
         fin: bool,
     ) -> Result<(), StreamError> {
+        trace!(stream = id.as_u64(), offset, fin, "ingesting stream data");
         self.get_or_create(id).ingest(offset, data, fin)
     }
 
     /// Read fully contiguous data from the receive buffer.
+    #[instrument(level = "trace", skip(self))]
     pub fn read(&mut self, id: StreamId, max_len: usize) -> Result<Vec<u8>, StreamError> {
         self.streams
             .get_mut(&id)

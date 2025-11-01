@@ -53,8 +53,8 @@ All crates live under `mxp-protocol/transport/` with internal dependencies only.
 - [ ] Benchmarks for mixed workloads.
 
 ### Phase 4 — Observability & Tooling (Week 11-12)
-- [ ] Tracing spans for connection lifecycle, retransmits, scheduler decisions.
-- [ ] Metrics integration with existing `Metrics` subsystem.
+- [ ] Tracing spans for connection lifecycle, retransmits, scheduler decisions *(initial spans/logs wired into transport, streams, scheduler, loss tracking)*.
+- [ ] Metrics integration with existing `Metrics` subsystem *(connection/stream counters hooked; scheduler/flow counters pending export)*.
 - [ ] Optional pcap exporter guarded by debug-only build configuration.
 - [ ] Runbook draft and troubleshooting section.
 

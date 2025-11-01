@@ -8,6 +8,7 @@ use super::crypto::{
 use super::error::TransportError;
 use super::handshake::nonce_from_packet_number;
 use super::packet::{HEADER_SIZE, PacketError, PacketFlags, PacketHeader};
+use tracing::{debug, instrument, trace};
 
 /// Result of decrypting an inbound packet.
 #[derive(Debug)]
@@ -86,6 +87,7 @@ impl PacketCipher {
     /// Seal the provided payload into the given buffer.
     ///
     /// Returns the packet number used for this transmission and the total encoded length.
+    #[instrument(level = "trace", skip(self, payload, buffer))]
     pub fn seal_into(
         &mut self,
         conn_id: u64,
@@ -136,10 +138,12 @@ impl PacketCipher {
         let mask = header_protection_mask(&self.send_hp, &sample);
         apply_header_mask(head, &mask);
 
+        debug!(packet_number, len = payload.len(), "sealed packet");
         Ok((packet_number, total_len))
     }
 
     /// Try to open an inbound packet, returning the header and plaintext payload.
+    #[instrument(level = "trace", skip(self, packet))]
     pub fn open(&mut self, packet: &[u8]) -> Result<DecryptedPacket, TransportError> {
         if packet.len() < HEADER_SIZE + AEAD_TAG_LEN {
             return Err(TransportError::Packet(PacketError::BufferTooSmall {
@@ -209,6 +213,11 @@ impl PacketCipher {
         };
         self.highest_received = Some(new_highest);
 
+        trace!(
+            packet_number = header.packet_number(),
+            len = plaintext.len(),
+            "opened packet"
+        );
         Ok(DecryptedPacket {
             header,
             payload: plaintext,

@@ -4,6 +4,9 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::protocol::metrics::Metrics;
+use tracing::{debug, instrument};
+
 use super::buffer::{Buffer, BufferPool};
 use super::error::TransportError;
 use super::packet::PacketFlags;
@@ -53,11 +56,13 @@ impl TransportHandle {
     }
 
     /// Send data to the specified remote address.
+    #[instrument(level = "trace", skip(self, buffer))]
     pub fn send(&self, buffer: &[u8], addr: SocketAddr) -> Result<usize, SocketError> {
         self.inner.socket.send_to(buffer, addr)
     }
 
     /// Receive data into the provided buffer (blocking call).
+    #[instrument(level = "trace", skip(self, buffer))]
     pub fn receive(&self, buffer: &mut Buffer) -> Result<(usize, SocketAddr), SocketError> {
         let raw = buffer.as_mut_slice();
         let (len, addr) = self.inner.socket.recv_from(raw)?;
@@ -66,6 +71,7 @@ impl TransportHandle {
     }
 
     /// Seal and send an encrypted packet using the provided cipher state.
+    #[instrument(level = "debug", skip(self, cipher, payload, buffer))]
     pub fn send_packet(
         &self,
         cipher: &mut PacketCipher,
@@ -87,6 +93,7 @@ impl TransportHandle {
     }
 
     /// Receive and decrypt a packet into plaintext payload using the provided cipher.
+    #[instrument(level = "debug", skip(self, cipher, buffer))]
     pub fn receive_packet(
         &self,
         cipher: &mut PacketCipher,
@@ -125,6 +132,7 @@ impl Transport {
     }
 
     /// Bind an endpoint on the provided address.
+    #[instrument(level = "info", skip(self))]
     pub fn bind(&self, addr: SocketAddr) -> Result<TransportHandle, SocketError> {
         let socket = SocketBinding::bind(addr)?;
         if let Some(timeout) = self.config.read_timeout {
@@ -133,6 +141,7 @@ impl Transport {
         if let Some(timeout) = self.config.write_timeout {
             socket.set_write_timeout(Some(timeout))?;
         }
+        Metrics::record_connection_open();
         Ok(self.build_handle(socket))
     }
 
@@ -147,5 +156,12 @@ impl Transport {
 impl Default for Transport {
     fn default() -> Self {
         Self::new(TransportConfig::default())
+    }
+}
+
+impl Drop for TransportInner {
+    fn drop(&mut self) {
+        debug!("transport handle dropped; metrics connection close");
+        Metrics::record_connection_close();
     }
 }

@@ -7,6 +7,8 @@ use super::stream::StreamId;
 
 #[cfg(test)]
 use super::stream::{EndpointRole, StreamKind};
+use crate::protocol::metrics::{self, SchedulerPriority};
+use tracing::trace;
 
 /// Priority class for outbound transmissions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -83,6 +85,12 @@ impl Scheduler {
     /// Register a stream ready to send.
     pub fn push_stream(&mut self, id: StreamId, priority: PriorityClass) {
         self.sequence = self.sequence.wrapping_add(1);
+        trace!(
+            stream = id.as_u64(),
+            ?priority,
+            "enqueue stream for scheduling"
+        );
+        metrics::Metrics::record_scheduler_enqueue(priority.into());
         self.streams.push(StreamEntry {
             priority,
             weight: priority.weight(),
@@ -93,17 +101,26 @@ impl Scheduler {
 
     /// Register an outbound datagram payload.
     pub fn push_datagram(&mut self, payload: Vec<u8>) {
+        trace!(len = payload.len(), "enqueue datagram");
         self.datagrams.push_back(payload);
     }
 
     /// Pop the highest priority stream, if any.
     pub fn pop_stream(&mut self) -> Option<(StreamId, PriorityClass)> {
-        self.streams.pop().map(|entry| (entry.id, entry.priority))
+        self.streams.pop().map(|entry| {
+            trace!(stream = entry.id.as_u64(), ?entry.priority, "dequeue stream for transmit");
+            metrics::Metrics::record_scheduler_dequeue(entry.priority.into());
+            (entry.id, entry.priority)
+        })
     }
 
     /// Pop the oldest datagram payload.
     pub fn pop_datagram(&mut self) -> Option<Vec<u8>> {
-        self.datagrams.pop_front()
+        let datagram = self.datagrams.pop_front();
+        if let Some(ref payload) = datagram {
+            trace!(len = payload.len(), "dequeue datagram");
+        }
+        datagram
     }
 
     /// Check whether any streams are queued.
