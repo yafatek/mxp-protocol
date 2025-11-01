@@ -233,7 +233,10 @@ impl Frame {
     /// Create a new frame instance.
     #[must_use]
     pub fn new(frame_type: FrameType, payload: Vec<u8>) -> Self {
-        Self { frame_type, payload }
+        Self {
+            frame_type,
+            payload,
+        }
     }
 
     /// Frame type accessor.
@@ -254,4 +257,3 @@ impl Frame {
         self.payload
     }
 }
-

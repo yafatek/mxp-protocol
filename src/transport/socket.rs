@@ -67,4 +67,3 @@ impl SocketBinding {
         Ok(self.socket.local_addr()?)
     }
 }
-

@@ -112,8 +112,8 @@ pub fn decode(bytes: Bytes) -> Result<Message> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bytes::Bytes;
     use crate::MessageType;
+    use bytes::Bytes;
 
     #[test]
     fn test_encode_decode_roundtrip() {

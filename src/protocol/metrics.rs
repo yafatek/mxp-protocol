@@ -165,12 +165,8 @@ impl Metrics {
 fn update_max(target: &AtomicU64, candidate: u64) {
     let mut current = target.load(Ordering::Relaxed);
     while candidate > current {
-        match target.compare_exchange_weak(
-            current,
-            candidate,
-            Ordering::Relaxed,
-            Ordering::Relaxed,
-        ) {
+        match target.compare_exchange_weak(current, candidate, Ordering::Relaxed, Ordering::Relaxed)
+        {
             Ok(_) => return,
             Err(old) => current = old,
         }
@@ -214,4 +210,3 @@ fn average_microseconds(total_ns: u64, count: u64) -> Option<u64> {
     let total_ns_u128 = u128::from(total_ns);
     Some((total_ns_u128 / (u128::from(count) * NANOSECONDS_PER_MICROSECOND)) as u64)
 }
-

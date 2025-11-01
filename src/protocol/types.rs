@@ -97,7 +97,8 @@ pub struct Flags(u8);
 
 impl Flags {
     /// Valid flag bits mask
-    pub const VALID_MASK: u8 = Self::COMPRESSED | Self::ENCRYPTED | Self::REQUIRES_ACK | Self::FINAL;
+    pub const VALID_MASK: u8 =
+        Self::COMPRESSED | Self::ENCRYPTED | Self::REQUIRES_ACK | Self::FINAL;
     /// Payload is compressed (zstd)
     pub const COMPRESSED: u8 = 1 << 0;
     /// Payload is encrypted (E2E)

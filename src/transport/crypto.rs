@@ -109,7 +109,10 @@ impl PrivateKey {
     pub fn public_key(&self) -> PublicKey {
         let mut out = [0u8; PUBLIC_KEY_LEN];
         for (idx, (dst, src)) in out.iter_mut().zip(self.0.iter()).enumerate() {
-            *dst = src.wrapping_mul(2).wrapping_add(1).rotate_left((idx % 8) as u32);
+            *dst = src
+                .wrapping_mul(2)
+                .wrapping_add(1)
+                .rotate_left((idx % 8) as u32);
         }
         PublicKey(out)
     }
@@ -392,16 +395,31 @@ pub fn decrypt(
 }
 
 /// Perform a dummy X25519 key agreement (placeholder).
+/// To simulate the commutative property of real DH (DH(a,B) = DH(b,A)),
+/// we derive the private key's corresponding public key, then combine both
+/// public keys in a commutative (order-independent) way.
 pub fn x25519_diffie_hellman(
-    _private: &PrivateKey,
+    private: &PrivateKey,
     public: &PublicKey,
 ) -> Result<SharedSecret, CryptoError> {
-    // For placeholder: return public key bytes as "shared secret" with simple transformation.
+    // Placeholder: Derive public from private, then combine both publics symmetrically.
+    // Real X25519: scalar_mult(a, B) where B = scalar_mult(b, G) gives a*b*G.
+    // So DH(a, B) = DH(b, A) because both = a*b*G.
+    let local_public = private.public_key();
     let mut secret = [0u8; SHARED_SECRET_LEN];
-    secret.copy_from_slice(public.as_bytes());
-    for byte in &mut secret {
-        *byte = byte.wrapping_add(1);
+
+    // Sort the two public keys to ensure commutativity
+    let (first, second) = if local_public.as_bytes() < public.as_bytes() {
+        (local_public.as_bytes(), public.as_bytes())
+    } else {
+        (public.as_bytes(), local_public.as_bytes())
+    };
+
+    for (idx, byte) in secret.iter_mut().enumerate() {
+        *byte = first[idx]
+            .wrapping_add(second[idx])
+            .wrapping_mul(0x2D)
+            .rotate_left(((idx & 7) + 3) as u32);
     }
     SharedSecret::from_bytes(&secret)
 }
-

@@ -45,7 +45,9 @@ impl BufferPool {
             .lock()
             .expect("buffer pool mutex poisoned");
 
-        let buffer = guard.pop_front().unwrap_or_else(|| vec![0u8; self.inner.buffer_size]);
+        let buffer = guard
+            .pop_front()
+            .unwrap_or_else(|| vec![0u8; self.inner.buffer_size]);
 
         Buffer {
             data: Some(buffer),
@@ -119,9 +121,7 @@ impl Buffer {
     /// Return the configured capacity.
     #[must_use]
     pub fn capacity(&self) -> usize {
-        self.data
-            .as_ref()
-            .map_or(0, |data| data.len())
+        self.data.as_ref().map_or(0, |data| data.len())
     }
 }
 
@@ -129,11 +129,14 @@ impl Drop for Buffer {
     fn drop(&mut self) {
         if let Some(mut data) = self.data.take() {
             data.fill(0);
-            let mut guard = self.pool.buffers.lock().expect("buffer pool mutex poisoned");
+            let mut guard = self
+                .pool
+                .buffers
+                .lock()
+                .expect("buffer pool mutex poisoned");
             if guard.len() < self.pool.max_buffers {
                 guard.push_back(data);
             }
         }
     }
 }
-

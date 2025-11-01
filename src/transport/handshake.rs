@@ -4,8 +4,8 @@ use std::collections::{HashSet, VecDeque};
 use std::time::{Duration, SystemTime};
 
 use super::crypto::{
-    derive_session_keys, x25519_diffie_hellman, AeadNonce, CryptoError, HandshakeState,
-    PrivateKey, PublicKey, SessionKeys, AEAD_NONCE_LEN, PUBLIC_KEY_LEN, SHARED_SECRET_LEN,
+    AEAD_NONCE_LEN, AeadNonce, CryptoError, HandshakeState, PUBLIC_KEY_LEN, PrivateKey, PublicKey,
+    SHARED_SECRET_LEN, SessionKeys, derive_session_keys, x25519_diffie_hellman,
 };
 use super::session::{SessionTicket, SessionTicketManager};
 
@@ -89,13 +89,12 @@ impl HandshakeMessage {
         if bytes.len() < 1 + PUBLIC_KEY_LEN + 2 {
             return Err(HandshakeError::MalformedMessage);
         }
-        let kind = HandshakeMessageKind::from_byte(bytes[0]).ok_or(HandshakeError::MalformedMessage)?;
+        let kind =
+            HandshakeMessageKind::from_byte(bytes[0]).ok_or(HandshakeError::MalformedMessage)?;
         let mut key_bytes = [0u8; PUBLIC_KEY_LEN];
         key_bytes.copy_from_slice(&bytes[1..1 + PUBLIC_KEY_LEN]);
-        let payload_len = u16::from_le_bytes([
-            bytes[1 + PUBLIC_KEY_LEN],
-            bytes[1 + PUBLIC_KEY_LEN + 1],
-        ]) as usize;
+        let payload_len =
+            u16::from_le_bytes([bytes[1 + PUBLIC_KEY_LEN], bytes[1 + PUBLIC_KEY_LEN + 1]]) as usize;
         if bytes.len() < 1 + PUBLIC_KEY_LEN + 2 + payload_len {
             return Err(HandshakeError::MalformedMessage);
         }
@@ -169,10 +168,7 @@ impl Initiator {
 
     /// Initiate the handshake by sending the first message.
     pub fn initiate(&mut self) -> HandshakeMessage {
-        let local_ephemeral = self
-            .state
-            .local_static()
-            .derive_ephemeral(0x11);
+        let local_ephemeral = self.state.local_static().derive_ephemeral(0x11);
         self.state.set_local_ephemeral(local_ephemeral.clone());
         let public_ephemeral = local_ephemeral.public_key();
 
@@ -180,7 +176,11 @@ impl Initiator {
         self.state.mix_key(self.remote_static.as_bytes());
 
         self.stage = InitiatorStage::AwaitingResponse;
-        HandshakeMessage::new(HandshakeMessageKind::InitiatorHello, public_ephemeral, Vec::new())
+        HandshakeMessage::new(
+            HandshakeMessageKind::InitiatorHello,
+            public_ephemeral,
+            Vec::new(),
+        )
     }
 
     /// Process the responder hello and produce the final message along with session keys.
@@ -289,10 +289,7 @@ impl Responder {
 
         self.state.set_remote_ephemeral(message.ephemeral().clone());
 
-        let local_ephemeral = self
-            .state
-            .local_static()
-            .derive_ephemeral(0x22);
+        let local_ephemeral = self.state.local_static().derive_ephemeral(0x22);
         self.state.set_local_ephemeral(local_ephemeral.clone());
 
         let shared = x25519_diffie_hellman(&local_ephemeral, message.ephemeral())?;
@@ -472,8 +469,14 @@ mod tests {
             .handle_initiator_finish(&msg_final)
             .expect("responder finish");
 
-        assert_eq!(initiator_keys.send().as_bytes(), outcome.session_keys.receive().as_bytes());
-        assert_eq!(initiator_keys.receive().as_bytes(), outcome.session_keys.send().as_bytes());
+        assert_eq!(
+            initiator_keys.send().as_bytes(),
+            outcome.session_keys.receive().as_bytes()
+        );
+        assert_eq!(
+            initiator_keys.receive().as_bytes(),
+            outcome.session_keys.send().as_bytes()
+        );
         assert!(outcome.session_ticket.is_valid());
     }
 
@@ -501,9 +504,8 @@ mod tests {
         let key = AeadKey::from_array([0x11u8; AEAD_KEY_LEN]);
         let plaintext = [0x22u8; 8];
         let (cipher, tag) = super::super::crypto::encrypt(&key, &nonce_a, &plaintext, &[]);
-        let decrypted = super::super::crypto::decrypt(&key, &nonce_a, &cipher, &[], &tag)
-            .expect("decrypt");
+        let decrypted =
+            super::super::crypto::decrypt(&key, &nonce_a, &cipher, &[], &tag).expect("decrypt");
         assert_eq!(plaintext.to_vec(), decrypted);
     }
 }
-
