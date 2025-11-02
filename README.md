@@ -8,16 +8,16 @@
 
 ## Overview
 
-MXP (Mesh eXchange Protocol) is an open, high-performance binary protocol designed specifically for agent-to-agent communication in distributed systems. MXP ships with a bespoke transport stack (currently using UDP as the carrier) that provides zero-round-trip-time connection patterns, built-in observability, and native streaming support optimized for AI agent workloads.
+MXP (Mesh eXchange Protocol) is an open, high-performance binary protocol designed specifically for agent-to-agent communication in distributed systems. MXP ships with a bespoke UDP-based transport stack that provides fast connection establishment, built-in observability, and native streaming support optimized for AI agent workloads.
 
 ### Key Features
 
-- **Zero-RTT Connection Establishment** - Resume connections without handshake overhead
+- **Fast Connection Establishment** - Minimal 3-message handshake with session resumption
 - **Built-in Distributed Tracing** - Every message includes trace context
 - **Native Streaming** - First-class support for streaming data (e.g., LLM token streams)
 - **Binary Wire Format** - Efficient 32-byte headers with zero-copy deserialization
 - **Sub-millisecond Latency** - Optimized for datacenter and cross-region communication
-- **MXP Transport** - Custom reliability, security, and scheduling tuned for agents
+- **Custom Transport** - UDP-based with ChaCha20-Poly1305 encryption, reliability, and scheduling tuned for agents
 
 ## Protocol Specification
 
@@ -31,6 +31,8 @@ See [SPEC.md](SPEC.md) for the complete wire format specification.
 | Header Size | 32 bytes (cache-aligned) |
 | Checksum Algorithm | XXHash3 (64-bit) |
 | Transport Protocol | MXP custom transport (UDP carrier) |
+| Encryption | ChaCha20-Poly1305 / AES-GCM (AEAD) |
+| Handshake | Noise IK-inspired with X25519 |
 | Default Port | 9000 |
 | Maximum Payload | 16 MB |
 | Endianness | Little-endian |
@@ -184,23 +186,28 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ### vs HTTP/REST
 
-- **Connection Setup**: MXP uses 0-RTT vs HTTP's 200-300ms for new connections
+- **Connection Setup**: MXP uses 3-message handshake (~1-2 RTT) vs HTTP's 200-300ms for new TLS connections
 - **Observability**: Built-in tracing vs requires separate instrumentation
 - **Streaming**: Native support vs Server-Sent Events or WebSocket
 - **Overhead**: 40 bytes per message vs 100+ bytes of HTTP headers
+- **Encryption**: ChaCha20-Poly1305 at transport layer vs TLS 1.3
 
 ### vs gRPC
 
-- **Transport**: MXP custom transport vs HTTP/2 over TCP
+- **Transport**: MXP custom UDP-based vs HTTP/2 over TCP
 - **Agent Discovery**: Built into protocol vs requires external service mesh
 - **Tracing**: Mandatory trace IDs vs optional metadata
 - **Binary Format**: Custom optimized vs Protocol Buffers
+- **Dependencies**: Zero external deps vs requires QUIC/HTTP2 libraries
 
 ## Security Considerations
 
-- Noise IK handshake with mutual authentication (in progress)
-- AEAD encryption mandated for all transport payloads
-- Optional end-to-end payload encryption
+- **Handshake:** Noise IK-inspired pattern with X25519 key exchange
+- **Encryption:** ChaCha20-Poly1305 / AES-GCM AEAD mandated for all transport payloads
+- **Header Protection:** ChaCha20-based masking of packet numbers and flags
+- **Anti-Replay:** Packet number tracking and anti-replay store
+- **Session Tickets:** Optional fast reconnection with session resumption
+- Optional end-to-end payload encryption (message-level flag 0x02)
 - Rate limiting and quota enforcement at application layer
 
 See [SPEC.md](SPEC.md) for detailed security considerations.
