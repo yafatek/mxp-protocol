@@ -2,8 +2,8 @@
 
 **Version:** 1.0.0-draft  
 **Status:** In Development  
-**Author:** Feras  
-**Reference Implementation:** [mxp-protocol](https://github.com/yourusername/mxp-protocol) (Rust)  
+**Author:** Feras E. E. Alawadi
+**Reference Implementation:** [mxp-protocol](https://github.com/yafatrek/mxp-protocol) (Rust)  
 **Official Site:** [getmxp.xyz](https://getmxp.xyz)
 
 ## Overview
