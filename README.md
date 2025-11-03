@@ -6,7 +6,7 @@
 [![Crates.io](https://img.shields.io/crates/v/mxp.svg)](https://crates.io/crates/mxp)
 [![Documentation](https://docs.rs/mxp/badge.svg)](https://docs.rs/mxp)
 
-> **📄 [Read the Whitepaper](WHITEPAPER.md)** | **🌐 [Visit getmxp.xyz](https://getmxp.xyz)
+> **📄 [Read the Whitepaper](WHITEPAPER.md)** | 🌐 [Visit getmxp.xyz](https://getmxp.xyz)
 
 ## Overview
 
