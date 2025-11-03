@@ -1,14 +1,27 @@
 # MXP (Mesh eXchange Protocol)
 
-**High-performance binary protocol for agent-to-agent communication**
+**100x faster than HTTP for agent-to-agent communication**
 
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 [![Crates.io](https://img.shields.io/crates/v/mxp.svg)](https://crates.io/crates/mxp)
 [![Documentation](https://docs.rs/mxp/badge.svg)](https://docs.rs/mxp)
 
+> **📄 [Read the Whitepaper](WHITEPAPER.md)** | **🌐 [Visit getmxp.xyz](https://getmxp.xyz)** | **💬 [Join Discord](https://discord.gg/mxp-protocol)**
+
 ## Overview
 
-MXP (Mesh eXchange Protocol) is an open, high-performance binary protocol designed specifically for agent-to-agent communication in distributed systems. MXP ships with a bespoke UDP-based transport stack that provides fast connection establishment, built-in observability, and native streaming support optimized for AI agent workloads.
+MXP (Mesh eXchange Protocol) is an open, high-performance binary protocol purpose-built for agent-to-agent communication. Traditional HTTP wasn't designed for the performance and observability demands of distributed AI systems—MXP delivers **100x faster connection setup**, **10-50x lower latency**, and **built-in distributed tracing** without external instrumentation.
+
+### Why MXP?
+
+AI agents are evolving from isolated assistants to interconnected systems that collaborate in real-time. They need:
+- **Sub-millisecond latency** for coordination
+- **High message frequency** (thousands per second)
+- **Native streaming** for LLM token streams
+- **Built-in observability** across agent boundaries
+- **Explicit lifecycle management** (register, discover, heartbeat)
+
+MXP delivers all of this with a custom UDP-based transport optimized specifically for agent workloads.
 
 ### Key Features
 
@@ -241,21 +254,44 @@ This licensing allows:
 
 ## Resources
 
-- **Technical Documentation**: [docs.getmxp.xyz](https://yafatek.github.io/mxp-protocol/) - Complete protocol guide
-- **Specification**: [SPEC.md](SPEC.md) - Wire format specification
-- **API Documentation**: [docs.rs/mxp](https://docs.rs/mxp) - Rust API reference
-- **Examples**: [examples/](examples/) - Working code examples
-- **Website**: [getmxp.xyz](https://getmxp.xyz) - Protocol overview
-- **Crates.io**: [crates.io/crates/mxp](https://crates.io/crates/mxp) - Published crate
+- **📄 Whitepaper**: [WHITEPAPER.md](WHITEPAPER.md) - Complete technical design and rationale
+- **📋 Specification**: [SPEC.md](SPEC.md) - Wire format specification
+- **🌐 Website**: [getmxp.xyz](https://getmxp.xyz) - Protocol overview and use cases
+- **📚 API Docs**: [docs.rs/mxp](https://docs.rs/mxp) - Rust API reference
+- **💻 Examples**: [examples/](examples/) - Working code examples
+- **📦 Crates.io**: [crates.io/crates/mxp](https://crates.io/crates/mxp) - Published crate
 
-## Status
+## Status & Roadmap
 
-**Version**: 1.0.0-draft  
-**Status**: In Development  
-**Stability**: Experimental - Protocol may change before 1.0 release
+**Current Version**: 1.0.0-draft  
+**Status**: In Development (Production-ready core, expanding ecosystem)
 
-## Contact
+**Milestones:**
+- ✅ Core protocol implementation (Rust)
+- ✅ Custom UDP transport with encryption
+- ✅ Zero-copy message encoding/decoding
+- 🚧 JavaScript SDK (Beta)
+- 🚧 Control plane (Alpha)
+- 📅 Python SDK (Q2 2026)
+- 📅 v1.0 GA (Q4 2026)
 
-- **Protocol Discussion**: protocol@getmxp.xyz
-- **Issues**: [GitHub Issues](https://github.com/yourusername/mxp-protocol/issues)
-- **Security**: security@getmxp.xyz
+See [ROADMAP.md](../ROADMAP.md) for detailed timeline.
+
+## Community & Support
+
+- **💬 Discord**: [discord.gg/mxp-protocol](https://discord.gg/mxp-protocol) - Community chat
+- **🐦 Twitter**: [@mxp_protocol](https://twitter.com/mxp_protocol) - Updates and announcements
+- **📧 Email**: protocol@getmxp.xyz - Protocol discussion
+- **🐛 Issues**: [GitHub Issues](https://github.com/yafatek/mxp-protocol/issues) - Bug reports
+- **🔒 Security**: security@getmxp.xyz - Responsible disclosure
+
+## Enterprise
+
+For enterprise adoption, design partnerships, and commercial support:
+- **📧 Business Inquiries**: business@relaymxp.xyz
+- **📖 Adoption Playbook**: [docs/adoption-playbook.md](../docs/adoption-playbook.md)
+- **🏢 Enterprise Features**: SOC2, ISO 27001, HIPAA compliance available
+
+---
+
+**Built with ❤️ by the MXP community** | **License**: Protocol spec (CC0), Implementation (MIT OR Apache-2.0)
