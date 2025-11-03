@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** November 2025  
-**Authors:** Feras & Contributors  
+**Authors:** Feras E. S. Alawadi  
 **Website:** [getmxp.xyz](https://getmxp.xyz)  
 **GitHub:** [github.com/yafatek/mxp-protocol](https://github.com/yafatek/mxp-protocol)
 
