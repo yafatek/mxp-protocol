@@ -6,7 +6,7 @@
 [![Crates.io](https://img.shields.io/crates/v/mxp.svg)](https://crates.io/crates/mxp)
 [![Documentation](https://docs.rs/mxp/badge.svg)](https://docs.rs/mxp)
 
-> **📄 [Read the Whitepaper](WHITEPAPER.md)** | **🌐 [Visit getmxp.xyz](https://getmxp.xyz)** | **💬 [Join Discord](https://discord.gg/mxp-protocol)**
+> **📄 [Read the Whitepaper](WHITEPAPER.md)** | **🌐 [Visit getmxp.xyz](https://getmxp.xyz)
 
 ## Overview
 
@@ -279,7 +279,6 @@ See [ROADMAP.md](../ROADMAP.md) for detailed timeline.
 
 ## Community & Support
 
-- **💬 Discord**: [discord.gg/mxp-protocol](https://discord.gg/mxp-protocol) - Community chat
 - **🐦 Twitter**: [@mxp_protocol](https://twitter.com/mxp_protocol) - Updates and announcements
 - **📧 Email**: protocol@getmxp.xyz - Protocol discussion
 - **🐛 Issues**: [GitHub Issues](https://github.com/yafatek/mxp-protocol/issues) - Bug reports
