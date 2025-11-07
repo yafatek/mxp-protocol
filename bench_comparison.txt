@@ -1,0 +1,491 @@
+    Updating crates.io index
+     Locking 5 packages to latest Rust 1.85 compatible versions
+      Adding bincode v1.3.3 (available: v2.0.1)
+      Adding byteorder v1.5.0
+      Adding paste v1.0.15
+      Adding rmp v0.8.14
+      Adding rmp-serde v1.3.0
+ Downloading crates ...
+  Downloaded rmp v0.8.14
+  Downloaded paste v1.0.15
+  Downloaded rmp-serde v1.3.0
+  Downloaded bincode v1.3.3
+   Compiling smallvec v1.15.1
+   Compiling futures-core v0.3.31
+   Compiling parking_lot_core v0.9.12
+   Compiling stable_deref_trait v1.2.1
+   Compiling scopeguard v1.2.0
+   Compiling log v0.4.28
+   Compiling core-foundation-sys v0.8.7
+   Compiling http v1.3.1
+   Compiling pin-utils v0.1.0
+   Compiling syn v2.0.108
+   Compiling signal-hook-registry v1.4.6
+   Compiling mio v1.1.0
+   Compiling socket2 v0.6.1
+   Compiling futures-task v0.3.31
+   Compiling tower-service v0.3.3
+   Compiling writeable v0.6.2
+   Compiling lock_api v0.4.14
+   Compiling core-foundation v0.9.4
+   Compiling litemap v0.8.1
+   Compiling futures-util v0.3.31
+   Compiling system-configuration-sys v0.6.0
+   Compiling icu_normalizer_data v2.1.1
+   Compiling httparse v1.10.1
+   Compiling futures-sink v0.3.31
+   Compiling equivalent v1.0.2
+   Compiling percent-encoding v2.3.2
+   Compiling icu_properties_data v2.1.1
+   Compiling hashbrown v0.16.0
+   Compiling atomic-waker v1.1.2
+   Compiling slab v0.4.11
+   Compiling serde_json v1.0.145
+   Compiling tower-layer v0.3.3
+   Compiling try-lock v0.2.5
+   Compiling security-framework-sys v2.15.0
+   Compiling want v0.3.1
+   Compiling futures-channel v0.3.31
+   Compiling http-body v1.0.1
+   Compiling sync_wrapper v1.0.2
+   Compiling memchr v2.7.6
+   Compiling httpdate v1.0.3
+   Compiling native-tls v0.2.14
+   Compiling http-body-util v0.1.3
+   Compiling indexmap v2.12.0
+   Compiling security-framework v2.11.1
+   Compiling form_urlencoded v1.2.2
+   Compiling paste v1.0.15
+   Compiling ipnet v2.11.0
+   Compiling base64 v0.22.1
+   Compiling rustversion v1.0.22
+   Compiling parking_lot v0.12.5
+   Compiling mime v0.3.17
+   Compiling utf8_iter v1.0.4
+   Compiling zeroize v1.8.2
+   Compiling byteorder v1.5.0
+   Compiling iri-string v0.7.9
+   Compiling rustls-pki-types v1.13.0
+   Compiling serde_path_to_error v0.1.20
+   Compiling encoding_rs v0.8.35
+   Compiling matchit v0.7.3
+   Compiling synstructure v0.13.2
+   Compiling system-configuration v0.6.1
+   Compiling zerofrom-derive v0.1.6
+   Compiling yoke-derive v0.8.1
+   Compiling tracing-attributes v0.1.30
+   Compiling zerovec-derive v0.11.2
+   Compiling serde_derive v1.0.228
+   Compiling displaydoc v0.2.5
+   Compiling tokio-macros v2.6.0
+   Compiling zerocopy-derive v0.8.27
+   Compiling async-trait v0.1.89
+   Compiling thiserror-impl v2.0.17
+   Compiling zerofrom v0.1.6
+   Compiling tracing v0.1.41
+   Compiling tokio v1.48.0
+   Compiling zerocopy v0.8.27
+   Compiling thiserror v2.0.17
+   Compiling serde v1.0.228
+   Compiling rmp v0.8.14
+   Compiling yoke v0.8.1
+   Compiling axum-core v0.4.5
+   Compiling tower v0.4.13
+   Compiling half v2.7.1
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.9.0
+   Compiling ciborium-ll v0.2.2
+   Compiling proptest v1.9.0
+   Compiling tokio-util v0.7.17
+   Compiling tower v0.5.2
+   Compiling tokio-native-tls v0.3.1
+   Compiling serde_urlencoded v0.7.1
+   Compiling ciborium v0.2.2
+   Compiling tinytemplate v1.2.1
+   Compiling uuid v1.18.1
+   Compiling bincode v1.3.3
+   Compiling tower-http v0.6.6
+   Compiling h2 v0.4.12
+   Compiling mxp v0.1.0 (/Users/feras/Downloads/code/rust/relay/mxp-protocol)
+   Compiling criterion v0.5.1
+   Compiling rmp-serde v1.3.0
+   Compiling zerovec v0.11.5
+   Compiling zerotrie v0.2.3
+   Compiling hyper v1.7.0
+   Compiling hyper-util v0.1.17
+   Compiling tinystr v0.8.2
+   Compiling potential_utf v0.1.4
+   Compiling icu_collections v2.1.1
+   Compiling icu_locale_core v2.1.1
+   Compiling icu_provider v2.1.1
+   Compiling icu_normalizer v2.1.1
+   Compiling icu_properties v2.1.1
+   Compiling hyper-tls v0.6.0
+   Compiling idna_adapter v1.2.1
+   Compiling idna v1.1.0
+   Compiling axum v0.7.9
+   Compiling url v2.5.7
+   Compiling reqwest v0.12.24
+error[E0432]: unresolved import `serde`
+  --> benches/comparison.rs:33:9
+   |
+33 |     use serde::{Deserialize, Serialize};
+   |         ^^^^^ help: a similar path exists: `uuid::serde`
+
+error[E0432]: unresolved import `serde`
+  --> benches/comparison.rs:67:9
+   |
+67 |     use serde::{Deserialize, Serialize};
+   |         ^^^^^ help: a similar path exists: `uuid::serde`
+
+error[E0432]: unresolved import `serde`
+   --> benches/comparison.rs:103:9
+    |
+103 |     use serde::{Deserialize, Serialize};
+    |         ^^^^^ help: a similar path exists: `uuid::serde`
+
+error[E0432]: unresolved import `serde`
+   --> benches/comparison.rs:138:9
+    |
+138 |     use serde::{Deserialize, Serialize};
+    |         ^^^^^ help: a similar path exists: `uuid::serde`
+
+error[E0277]: the trait bound `JsonMessage: serde::Serialize` is not satisfied
+    --> benches/comparison.rs:55:57
+     |
+  55 |                 let json = black_box(serde_json::to_vec(m).unwrap());
+     |                                      ------------------ ^ the trait `serde_core::ser::Serialize` is not implemented for `JsonMessage`
+     |                                      |
+     |                                      required by a bound introduced by this call
+     |
+     = note: for local types consider adding `#[derive(serde::Serialize)]` to your `JsonMessage` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `serde_core::ser::Serialize`:
+               &'a T
+               &'a mut T
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+               (T0, T1, T2, T3)
+               (T0, T1, T2, T3, T4)
+             and 156 others
+note: required by a bound in `serde_json::to_vec`
+    --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.145/src/ser.rs:2215:17
+     |
+2213 | pub fn to_vec<T>(value: &T) -> Result<Vec<u8>>
+     |        ------ required by a bound in this function
+2214 | where
+2215 |     T: ?Sized + Serialize,
+     |                 ^^^^^^^^^ required by this bound in `to_vec`
+
+error[E0277]: the trait bound `JsonMessage: serde::Deserialize<'de>` is not satisfied
+    --> benches/comparison.rs:56:54
+     |
+  56 |                 let decoded: JsonMessage = black_box(serde_json::from_slice(&json).unwrap());
+     |                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `serde_core::de::Deserialize<'_>` is not implemented for `JsonMessage`
+     |
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `JsonMessage` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `serde_core::de::Deserialize<'de>`:
+               &'a Path
+               &'a [u8]
+               &'a serde_json::value::RawValue
+               &'a str
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+             and 161 others
+note: required by a bound in `serde_json::from_slice`
+    --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.145/src/de.rs:2657:8
+     |
+2655 | pub fn from_slice<'a, T>(v: &'a [u8]) -> Result<T>
+     |        ---------- required by a bound in this function
+2656 | where
+2657 |     T: de::Deserialize<'a>,
+     |        ^^^^^^^^^^^^^^^^^^^ required by this bound in `from_slice`
+
+error[E0277]: the trait bound `ProtoMessage: serde::Serialize` is not satisfied
+   --> benches/comparison.rs:91:60
+    |
+ 91 |                 let encoded = black_box(bincode::serialize(m).unwrap());
+    |                                         ------------------ ^ the trait `serde_core::ser::Serialize` is not implemented for `ProtoMessage`
+    |                                         |
+    |                                         required by a bound introduced by this call
+    |
+    = note: for local types consider adding `#[derive(serde::Serialize)]` to your `ProtoMessage` type
+    = note: for types from other crates check whether the crate offers a `serde` feature flag
+    = help: the following other types implement trait `serde_core::ser::Serialize`:
+              &'a T
+              &'a mut T
+              ()
+              (T,)
+              (T0, T1)
+              (T0, T1, T2)
+              (T0, T1, T2, T3)
+              (T0, T1, T2, T3, T4)
+            and 156 others
+note: required by a bound in `bincode::serialize`
+   --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bincode-1.3.3/src/lib.rs:108:8
+    |
+106 | pub fn serialize<T: ?Sized>(value: &T) -> Result<Vec<u8>>
+    |        --------- required by a bound in this function
+107 | where
+108 |     T: serde::Serialize,
+    |        ^^^^^^^^^^^^^^^^ required by this bound in `serialize`
+
+error[E0277]: the trait bound `ProtoMessage: serde::Deserialize<'de>` is not satisfied
+   --> benches/comparison.rs:92:55
+    |
+ 92 |                 let decoded: ProtoMessage = black_box(bincode::deserialize(&encoded).unwrap());
+    |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `serde_core::de::Deserialize<'_>` is not implemented for `ProtoMessage`
+    |
+    = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `ProtoMessage` type
+    = note: for types from other crates check whether the crate offers a `serde` feature flag
+    = help: the following other types implement trait `serde_core::de::Deserialize<'de>`:
+              &'a Path
+              &'a [u8]
+              &'a serde_json::value::RawValue
+              &'a str
+              ()
+              (T,)
+              (T0, T1)
+              (T0, T1, T2)
+            and 161 others
+note: required by a bound in `bincode::deserialize`
+   --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bincode-1.3.3/src/lib.rs:179:8
+    |
+177 | pub fn deserialize<'a, T>(bytes: &'a [u8]) -> Result<T>
+    |        ----------- required by a bound in this function
+178 | where
+179 |     T: serde::de::Deserialize<'a>,
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `deserialize`
+
+error[E0277]: the trait bound `MsgPackMessage: serde::Serialize` is not satisfied
+    --> benches/comparison.rs:125:59
+     |
+ 125 |                 let encoded = black_box(rmp_serde::to_vec(m).unwrap());
+     |                                         ----------------- ^ the trait `serde_core::ser::Serialize` is not implemented for `MsgPackMessage`
+     |                                         |
+     |                                         required by a bound introduced by this call
+     |
+     = note: for local types consider adding `#[derive(serde::Serialize)]` to your `MsgPackMessage` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `serde_core::ser::Serialize`:
+               &'a T
+               &'a mut T
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+               (T0, T1, T2, T3)
+               (T0, T1, T2, T3, T4)
+             and 156 others
+note: required by a bound in `rmp_serde::to_vec`
+    --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rmp-serde-1.3.0/src/encode.rs:1228:8
+     |
+1226 | pub fn to_vec<T>(val: &T) -> Result<Vec<u8>, Error>
+     |        ------ required by a bound in this function
+1227 | where
+1228 |     T: Serialize + ?Sized,
+     |        ^^^^^^^^^ required by this bound in `to_vec`
+
+error[E0277]: the trait bound `MsgPackMessage: serde::Deserialize<'de>` is not satisfied
+    --> benches/comparison.rs:127:31
+     |
+ 127 |                     black_box(rmp_serde::from_slice(&encoded).unwrap());
+     |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `serde_core::de::Deserialize<'_>` is not implemented for `MsgPackMessage`
+     |
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `MsgPackMessage` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `serde_core::de::Deserialize<'de>`:
+               &'a Path
+               &'a [u8]
+               &'a serde_json::value::RawValue
+               &'a str
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+             and 161 others
+note: required by a bound in `rmp_serde::from_slice`
+    --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rmp-serde-1.3.0/src/decode.rs:1178:8
+     |
+1176 | pub fn from_slice<'a, T>(input: &'a [u8]) -> Result<T, Error>
+     |        ---------- required by a bound in this function
+1177 | where
+1178 |     T: Deserialize<'a>,
+     |        ^^^^^^^^^^^^^^^ required by this bound in `from_slice`
+
+error[E0277]: the trait bound `GenericMessage: serde::Serialize` is not satisfied
+    --> benches/comparison.rs:173:53
+     |
+ 173 |             let json = black_box(serde_json::to_vec(&json_msg).unwrap());
+     |                                  ------------------ ^^^^^^^^^ the trait `serde_core::ser::Serialize` is not implemented for `GenericMessage`
+     |                                  |
+     |                                  required by a bound introduced by this call
+     |
+     = note: for local types consider adding `#[derive(serde::Serialize)]` to your `GenericMessage` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `serde_core::ser::Serialize`:
+               &'a T
+               &'a mut T
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+               (T0, T1, T2, T3)
+               (T0, T1, T2, T3, T4)
+             and 156 others
+note: required by a bound in `serde_json::to_vec`
+    --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.145/src/ser.rs:2215:17
+     |
+2213 | pub fn to_vec<T>(value: &T) -> Result<Vec<u8>>
+     |        ------ required by a bound in this function
+2214 | where
+2215 |     T: ?Sized + Serialize,
+     |                 ^^^^^^^^^ required by this bound in `to_vec`
+
+error[E0277]: the trait bound `GenericMessage: serde::Deserialize<'de>` is not satisfied
+    --> benches/comparison.rs:174:53
+     |
+ 174 |             let decoded: GenericMessage = black_box(serde_json::from_slice(&json).unwrap());
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `serde_core::de::Deserialize<'_>` is not implemented for `GenericMessage`
+     |
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `GenericMessage` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `serde_core::de::Deserialize<'de>`:
+               &'a Path
+               &'a [u8]
+               &'a serde_json::value::RawValue
+               &'a str
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+             and 161 others
+note: required by a bound in `serde_json::from_slice`
+    --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.145/src/de.rs:2657:8
+     |
+2655 | pub fn from_slice<'a, T>(v: &'a [u8]) -> Result<T>
+     |        ---------- required by a bound in this function
+2656 | where
+2657 |     T: de::Deserialize<'a>,
+     |        ^^^^^^^^^^^^^^^^^^^ required by this bound in `from_slice`
+
+error[E0277]: the trait bound `GenericMessage: serde::Serialize` is not satisfied
+   --> benches/comparison.rs:182:56
+    |
+182 |             let encoded = black_box(bincode::serialize(&json_msg).unwrap());
+    |                                     ------------------ ^^^^^^^^^ the trait `serde_core::ser::Serialize` is not implemented for `GenericMessage`
+    |                                     |
+    |                                     required by a bound introduced by this call
+    |
+    = note: for local types consider adding `#[derive(serde::Serialize)]` to your `GenericMessage` type
+    = note: for types from other crates check whether the crate offers a `serde` feature flag
+    = help: the following other types implement trait `serde_core::ser::Serialize`:
+              &'a T
+              &'a mut T
+              ()
+              (T,)
+              (T0, T1)
+              (T0, T1, T2)
+              (T0, T1, T2, T3)
+              (T0, T1, T2, T3, T4)
+            and 156 others
+note: required by a bound in `bincode::serialize`
+   --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bincode-1.3.3/src/lib.rs:108:8
+    |
+106 | pub fn serialize<T: ?Sized>(value: &T) -> Result<Vec<u8>>
+    |        --------- required by a bound in this function
+107 | where
+108 |     T: serde::Serialize,
+    |        ^^^^^^^^^^^^^^^^ required by this bound in `serialize`
+
+error[E0277]: the trait bound `GenericMessage: serde::Deserialize<'de>` is not satisfied
+   --> benches/comparison.rs:183:53
+    |
+183 |             let decoded: GenericMessage = black_box(bincode::deserialize(&encoded).unwrap());
+    |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `serde_core::de::Deserialize<'_>` is not implemented for `GenericMessage`
+    |
+    = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `GenericMessage` type
+    = note: for types from other crates check whether the crate offers a `serde` feature flag
+    = help: the following other types implement trait `serde_core::de::Deserialize<'de>`:
+              &'a Path
+              &'a [u8]
+              &'a serde_json::value::RawValue
+              &'a str
+              ()
+              (T,)
+              (T0, T1)
+              (T0, T1, T2)
+            and 161 others
+note: required by a bound in `bincode::deserialize`
+   --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bincode-1.3.3/src/lib.rs:179:8
+    |
+177 | pub fn deserialize<'a, T>(bytes: &'a [u8]) -> Result<T>
+    |        ----------- required by a bound in this function
+178 | where
+179 |     T: serde::de::Deserialize<'a>,
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `deserialize`
+
+error[E0277]: the trait bound `GenericMessage: serde::Serialize` is not satisfied
+    --> benches/comparison.rs:191:55
+     |
+ 191 |             let encoded = black_box(rmp_serde::to_vec(&json_msg).unwrap());
+     |                                     ----------------- ^^^^^^^^^ the trait `serde_core::ser::Serialize` is not implemented for `GenericMessage`
+     |                                     |
+     |                                     required by a bound introduced by this call
+     |
+     = note: for local types consider adding `#[derive(serde::Serialize)]` to your `GenericMessage` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `serde_core::ser::Serialize`:
+               &'a T
+               &'a mut T
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+               (T0, T1, T2, T3)
+               (T0, T1, T2, T3, T4)
+             and 156 others
+note: required by a bound in `rmp_serde::to_vec`
+    --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rmp-serde-1.3.0/src/encode.rs:1228:8
+     |
+1226 | pub fn to_vec<T>(val: &T) -> Result<Vec<u8>, Error>
+     |        ------ required by a bound in this function
+1227 | where
+1228 |     T: Serialize + ?Sized,
+     |        ^^^^^^^^^ required by this bound in `to_vec`
+
+error[E0277]: the trait bound `GenericMessage: serde::Deserialize<'de>` is not satisfied
+    --> benches/comparison.rs:192:53
+     |
+ 192 |             let decoded: GenericMessage = black_box(rmp_serde::from_slice(&encoded).unwrap());
+     |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `serde_core::de::Deserialize<'_>` is not implemented for `GenericMessage`
+     |
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `GenericMessage` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `serde_core::de::Deserialize<'de>`:
+               &'a Path
+               &'a [u8]
+               &'a serde_json::value::RawValue
+               &'a str
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+             and 161 others
+note: required by a bound in `rmp_serde::from_slice`
+    --> /Users/feras/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rmp-serde-1.3.0/src/decode.rs:1178:8
+     |
+1176 | pub fn from_slice<'a, T>(input: &'a [u8]) -> Result<T, Error>
+     |        ---------- required by a bound in this function
+1177 | where
+1178 |     T: Deserialize<'a>,
+     |        ^^^^^^^^^^^^^^^ required by this bound in `from_slice`
+
+Some errors have detailed explanations: E0277, E0432.
+For more information about an error, try `rustc --explain E0277`.
+error: could not compile `mxp` (bench "comparison") due to 16 previous errors

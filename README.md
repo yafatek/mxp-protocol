@@ -1,6 +1,7 @@
 # MXP (Mesh eXchange Protocol)
 
-**The first protocol designed specifically for AI agent communication**
+**The first protocol designed specifically for AI agent communication**  
+*37x faster than JSON • Built-in observability • Zero dependencies*
 
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 [![Crates.io](https://img.shields.io/crates/v/mxp.svg)](https://crates.io/crates/mxp)
@@ -281,11 +282,27 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## Comparison with Other Protocols
 
+### vs JSON / MessagePack / Bincode
+
+**Verified with benchmarks** (256-byte messages, macOS ARM64):
+
+| Protocol | Encode+Decode Time | vs MXP |
+|----------|---------------------|--------|
+| **MXP** | **60ns** | **1x** |
+| Bincode | 221ns | 3.7x slower |
+| MessagePack | 1,178ns | 19.5x slower |
+| JSON | 2,262ns | **37.5x slower** |
+
+**MXP advantage**: Fastest codec, agent-native features, built-in tracing  
+**JSON advantage**: Human-readable, universal tooling, browser support
+
+See [docs/COMPARISON_BENCHMARKS.md](docs/COMPARISON_BENCHMARKS.md) for detailed analysis.
+
 ### vs Protocol Buffers / gRPC
 
 | Feature | MXP | Protocol Buffers | gRPC |
 |---------|-----|------------------|------|
-| **Encode speed** | 27ns (256B) | ~100-200ns | ~100-200ns + HTTP/2 |
+| **Codec speed** | 60ns (256B, verified) | ~100-200ns (estimated) | ~100-200ns + HTTP/2 |
 | **Agent primitives** | Built-in (Register, Discover) | No | No |
 | **Tracing** | Built-in (every message) | External | External (OpenTelemetry) |
 | **Dependencies** | Zero (pure Rust) | protoc compiler | HTTP/2, TLS libraries |
@@ -293,6 +310,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 **MXP advantage**: Agent-native operations + built-in observability  
 **Protobuf advantage**: More mature ecosystem, language support
+
+*Note: Protobuf/gRPC numbers are estimates. Direct comparison benchmarks coming soon.*
 
 ### vs Cap'n Proto / FlatBuffers
 

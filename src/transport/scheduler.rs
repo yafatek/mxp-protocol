@@ -71,6 +71,12 @@ pub struct Scheduler {
     sequence: u64,
 }
 
+impl Default for Scheduler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Scheduler {
     /// Construct an empty scheduler.
     #[must_use]

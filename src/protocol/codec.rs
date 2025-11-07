@@ -200,8 +200,8 @@ mod tests {
     #[cfg(test)]
     mod proptests {
         use super::*;
-        use proptest::prelude::*;
         use crate::{MAGIC_NUMBER, MAX_PAYLOAD_SIZE};
+        use proptest::prelude::*;
 
         // Strategy to generate valid message types
         fn message_type_strategy() -> impl Strategy<Value = MessageType> {
@@ -300,7 +300,7 @@ mod tests {
 
                 // Replace magic number
                 encoded[0..4].copy_from_slice(&invalid_magic.to_le_bytes());
-                
+
                 let result = decode(Bytes::from(encoded));
                 prop_assert!(result.is_err(), "Invalid magic should be rejected");
             }

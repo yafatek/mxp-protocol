@@ -25,7 +25,7 @@ impl PcapRecorder {
         let mut guard = self
             .inner
             .lock()
-            .map_err(|_| io::Error::new(io::ErrorKind::Other, "pcap recorder poisoned"))?;
+            .map_err(|_| io::Error::other("pcap recorder poisoned"))?;
         guard.write_packet(timestamp, packet)
     }
 }
@@ -85,7 +85,7 @@ fn write_global_header(file: &mut File) -> io::Result<()> {
 
 fn micros(timestamp: SystemTime) -> (u32, u32) {
     let duration = timestamp.duration_since(UNIX_EPOCH).unwrap_or_default();
-    let secs = duration.as_secs().min(u32::MAX as u64) as u32;
-    let micros = (duration.subsec_nanos() / 1_000) as u32;
+    let secs = duration.as_secs().min(u64::from(u32::MAX)) as u32;
+    let micros = duration.subsec_micros();
     (secs, micros)
 }

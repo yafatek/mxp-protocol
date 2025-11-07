@@ -266,10 +266,8 @@ fn packet_engine_survives_loss_and_reorder() {
                 if let Some(ack_pkt) = client.on_receive(now, bytes) {
                     client.outbound.push_back(ack_pkt);
                 }
-            } else {
-                if let Some(ack_pkt) = server.on_receive(now, bytes) {
-                    server.outbound.push_back(ack_pkt);
-                }
+            } else if let Some(ack_pkt) = server.on_receive(now, bytes) {
+                server.outbound.push_back(ack_pkt);
             }
         });
 
@@ -284,11 +282,10 @@ fn packet_engine_survives_loss_and_reorder() {
             }
         }
 
-        if server.received.len() == messages.len() && client.outbound.is_empty() {
-            if client.loss.outstanding().next().is_none() {
+        if server.received.len() == messages.len() && client.outbound.is_empty()
+            && client.loss.outstanding().next().is_none() {
                 break;
             }
-        }
 
         now += Duration::from_millis(5);
     }
