@@ -1,0 +1,345 @@
+   Compiling mxp v0.1.0 (/Users/feras/Downloads/code/rust/relay/mxp-protocol)
+    Finished `bench` profile [optimized] target(s) in 8.92s
+     Running benches/codec.rs (target/release/deps/codec-66cf6dc58a7a2935)
+Gnuplot not found, using plotters backend
+Benchmarking encode/0
+Benchmarking encode/0: Warming up for 3.0000 s
+Benchmarking encode/0: Collecting 100 samples in estimated 5.0000 s (240M iterations)
+Benchmarking encode/0: Analyzing
+encode/0                time:   [20.701 ns 20.781 ns 20.882 ns]
+                        thrpt:  [1.7839 GiB/s 1.7926 GiB/s 1.7996 GiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) low severe
+  3 (3.00%) low mild
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+Benchmarking encode/64
+Benchmarking encode/64: Warming up for 3.0000 s
+Benchmarking encode/64: Collecting 100 samples in estimated 5.0001 s (235M iterations)
+Benchmarking encode/64: Analyzing
+encode/64               time:   [21.173 ns 21.233 ns 21.289 ns]
+                        thrpt:  [4.5496 GiB/s 4.5616 GiB/s 4.5746 GiB/s]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+Benchmarking encode/256
+Benchmarking encode/256: Warming up for 3.0000 s
+Benchmarking encode/256: Collecting 100 samples in estimated 5.0000 s (187M iterations)
+Benchmarking encode/256: Analyzing
+encode/256              time:   [26.752 ns 26.874 ns 27.059 ns]
+                        thrpt:  [10.188 GiB/s 10.258 GiB/s 10.305 GiB/s]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) low severe
+  2 (2.00%) high severe
+Benchmarking encode/1024
+Benchmarking encode/1024: Warming up for 3.0000 s
+Benchmarking encode/1024: Collecting 100 samples in estimated 5.0001 s (110M iterations)
+Benchmarking encode/1024: Analyzing
+encode/1024             time:   [45.712 ns 45.885 ns 46.168 ns]
+                        thrpt:  [21.464 GiB/s 21.596 GiB/s 21.678 GiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  1 (1.00%) low severe
+  3 (3.00%) low mild
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking encode/4096
+Benchmarking encode/4096: Warming up for 3.0000 s
+Benchmarking encode/4096: Collecting 100 samples in estimated 5.0007 s (35M iterations)
+Benchmarking encode/4096: Analyzing
+encode/4096             time:   [142.01 ns 142.41 ns 142.82 ns]
+                        thrpt:  [26.970 GiB/s 27.049 GiB/s 27.125 GiB/s]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking encode/16384
+Benchmarking encode/16384: Warming up for 3.0000 s
+Benchmarking encode/16384: Collecting 100 samples in estimated 5.0019 s (9.7M iterations)
+Benchmarking encode/16384: Analyzing
+encode/16384            time:   [514.38 ns 517.98 ns 523.26 ns]
+                        thrpt:  [29.232 GiB/s 29.530 GiB/s 29.737 GiB/s]
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low severe
+  1 (1.00%) low mild
+  3 (3.00%) high severe
+
+Benchmarking decode/0
+Benchmarking decode/0: Warming up for 3.0000 s
+Benchmarking decode/0: Collecting 100 samples in estimated 5.0000 s (570M iterations)
+Benchmarking decode/0: Analyzing
+decode/0                time:   [8.8061 ns 8.8371 ns 8.8713 ns]
+                        thrpt:  [4.1993 GiB/s 4.2155 GiB/s 4.2303 GiB/s]
+Found 5 outliers among 100 measurements (5.00%)
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+Benchmarking decode/64
+Benchmarking decode/64: Warming up for 3.0000 s
+Benchmarking decode/64: Collecting 100 samples in estimated 5.0001 s (465M iterations)
+Benchmarking decode/64: Analyzing
+decode/64               time:   [10.648 ns 10.674 ns 10.702 ns]
+                        thrpt:  [9.0508 GiB/s 9.0741 GiB/s 9.0961 GiB/s]
+Found 10 outliers among 100 measurements (10.00%)
+  7 (7.00%) high mild
+  3 (3.00%) high severe
+Benchmarking decode/256
+Benchmarking decode/256: Warming up for 3.0000 s
+Benchmarking decode/256: Collecting 100 samples in estimated 5.0000 s (365M iterations)
+Benchmarking decode/256: Analyzing
+decode/256              time:   [13.668 ns 13.678 ns 13.689 ns]
+                        thrpt:  [20.138 GiB/s 20.154 GiB/s 20.170 GiB/s]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low severe
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  5 (5.00%) high severe
+Benchmarking decode/1024
+Benchmarking decode/1024: Warming up for 3.0000 s
+Benchmarking decode/1024: Collecting 100 samples in estimated 5.0001 s (159M iterations)
+Benchmarking decode/1024: Analyzing
+decode/1024             time:   [31.510 ns 31.718 ns 32.082 ns]
+                        thrpt:  [30.887 GiB/s 31.242 GiB/s 31.448 GiB/s]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) low mild
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+Benchmarking decode/4096
+Benchmarking decode/4096: Warming up for 3.0000 s
+Benchmarking decode/4096: Collecting 100 samples in estimated 5.0003 s (52M iterations)
+Benchmarking decode/4096: Analyzing
+decode/4096             time:   [95.093 ns 95.247 ns 95.392 ns]
+                        thrpt:  [40.380 GiB/s 40.442 GiB/s 40.507 GiB/s]
+Found 6 outliers among 100 measurements (6.00%)
+  2 (2.00%) low severe
+  3 (3.00%) low mild
+  1 (1.00%) high mild
+Benchmarking decode/16384
+Benchmarking decode/16384: Warming up for 3.0000 s
+Benchmarking decode/16384: Collecting 100 samples in estimated 5.0007 s (13M iterations)
+Benchmarking decode/16384: Analyzing
+decode/16384            time:   [371.87 ns 372.35 ns 372.83 ns]
+                        thrpt:  [41.027 GiB/s 41.080 GiB/s 41.133 GiB/s]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high severe
+
+Benchmarking roundtrip/0
+Benchmarking roundtrip/0: Warming up for 3.0000 s
+Benchmarking roundtrip/0: Collecting 100 samples in estimated 5.0001 s (184M iterations)
+Benchmarking roundtrip/0: Analyzing
+roundtrip/0             time:   [27.066 ns 27.112 ns 27.159 ns]
+                        thrpt:  [1.3716 GiB/s 1.3740 GiB/s 1.3764 GiB/s]
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low severe
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking roundtrip/64
+Benchmarking roundtrip/64: Warming up for 3.0000 s
+Benchmarking roundtrip/64: Collecting 100 samples in estimated 5.0000 s (97M iterations)
+Benchmarking roundtrip/64: Analyzing
+roundtrip/64            time:   [50.990 ns 51.150 ns 51.353 ns]
+                        thrpt:  [1.8861 GiB/s 1.8936 GiB/s 1.8996 GiB/s]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+Benchmarking roundtrip/256
+Benchmarking roundtrip/256: Warming up for 3.0000 s
+Benchmarking roundtrip/256: Collecting 100 samples in estimated 5.0001 s (81M iterations)
+Benchmarking roundtrip/256: Analyzing
+roundtrip/256           time:   [61.596 ns 61.823 ns 62.055 ns]
+                        thrpt:  [4.4423 GiB/s 4.4591 GiB/s 4.4755 GiB/s]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking roundtrip/1024
+Benchmarking roundtrip/1024: Warming up for 3.0000 s
+Benchmarking roundtrip/1024: Collecting 100 samples in estimated 5.0000 s (51M iterations)
+Benchmarking roundtrip/1024: Analyzing
+roundtrip/1024          time:   [96.743 ns 97.544 ns 98.582 ns]
+                        thrpt:  [10.052 GiB/s 10.159 GiB/s 10.243 GiB/s]
+Found 11 outliers among 100 measurements (11.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  9 (9.00%) high severe
+Benchmarking roundtrip/4096
+Benchmarking roundtrip/4096: Warming up for 3.0000 s
+Benchmarking roundtrip/4096: Collecting 100 samples in estimated 5.0006 s (19M iterations)
+Benchmarking roundtrip/4096: Analyzing
+roundtrip/4096          time:   [259.77 ns 261.88 ns 264.70 ns]
+                        thrpt:  [14.552 GiB/s 14.709 GiB/s 14.828 GiB/s]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking header_encode
+Benchmarking header_encode: Warming up for 3.0000 s
+Benchmarking header_encode: Collecting 100 samples in estimated 5.0000 s (667M iterations)
+Benchmarking header_encode: Analyzing
+header_encode           time:   [7.4346 ns 7.4677 ns 7.5043 ns]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking header_decode
+Benchmarking header_decode: Warming up for 3.0000 s
+Benchmarking header_decode: Collecting 100 samples in estimated 5.0000 s (2.5B iterations)
+Benchmarking header_decode: Analyzing
+header_decode           time:   [1.9034 ns 1.9434 ns 1.9834 ns]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) low mild
+
+Benchmarking checksum/32
+Benchmarking checksum/32: Warming up for 3.0000 s
+Benchmarking checksum/32: Collecting 100 samples in estimated 5.0000 s (11B iterations)
+Benchmarking checksum/32: Analyzing
+checksum/32             time:   [439.69 ps 441.94 ps 445.96 ps]
+                        thrpt:  [66.827 GiB/s 67.435 GiB/s 67.781 GiB/s]
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) low mild
+  1 (1.00%) high mild
+  1 (1.00%) high severe
+Benchmarking checksum/64
+Benchmarking checksum/64: Warming up for 3.0000 s
+Benchmarking checksum/64: Collecting 100 samples in estimated 5.0000 s (6.3B iterations)
+Benchmarking checksum/64: Analyzing
+checksum/64             time:   [792.38 ps 793.31 ps 794.31 ps]
+                        thrpt:  [75.039 GiB/s 75.134 GiB/s 75.223 GiB/s]
+Found 13 outliers among 100 measurements (13.00%)
+  3 (3.00%) low mild
+  6 (6.00%) high mild
+  4 (4.00%) high severe
+Benchmarking checksum/256
+Benchmarking checksum/256: Warming up for 3.0000 s
+Benchmarking checksum/256: Collecting 100 samples in estimated 5.0000 s (840M iterations)
+Benchmarking checksum/256: Analyzing
+checksum/256            time:   [5.9528 ns 5.9693 ns 5.9904 ns]
+                        thrpt:  [39.800 GiB/s 39.941 GiB/s 40.051 GiB/s]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) high mild
+  1 (1.00%) high severe
+Benchmarking checksum/1024
+Benchmarking checksum/1024: Warming up for 3.0000 s
+Benchmarking checksum/1024: Collecting 100 samples in estimated 5.0000 s (241M iterations)
+Benchmarking checksum/1024: Analyzing
+checksum/1024           time:   [20.627 ns 20.673 ns 20.720 ns]
+                        thrpt:  [46.028 GiB/s 46.132 GiB/s 46.235 GiB/s]
+Benchmarking checksum/4096
+Benchmarking checksum/4096: Warming up for 3.0000 s
+Benchmarking checksum/4096: Collecting 100 samples in estimated 5.0004 s (58M iterations)
+Benchmarking checksum/4096: Analyzing
+checksum/4096           time:   [85.279 ns 85.549 ns 85.890 ns]
+                        thrpt:  [44.414 GiB/s 44.591 GiB/s 44.732 GiB/s]
+Found 12 outliers among 100 measurements (12.00%)
+  2 (2.00%) low mild
+  6 (6.00%) high mild
+  4 (4.00%) high severe
+Benchmarking checksum/16384
+Benchmarking checksum/16384: Warming up for 3.0000 s
+Benchmarking checksum/16384: Collecting 100 samples in estimated 5.0000 s (14M iterations)
+Benchmarking checksum/16384: Analyzing
+checksum/16384          time:   [356.83 ns 357.53 ns 358.16 ns]
+                        thrpt:  [42.603 GiB/s 42.679 GiB/s 42.762 GiB/s]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) low severe
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+
+Benchmarking message_types/encode/AgentRegister
+Benchmarking message_types/encode/AgentRegister: Warming up for 3.0000 s
+Benchmarking message_types/encode/AgentRegister: Collecting 100 samples in estimated 5.0001 s (187M iterations)
+Benchmarking message_types/encode/AgentRegister: Analyzing
+message_types/encode/AgentRegister
+                        time:   [26.696 ns 26.781 ns 26.892 ns]
+Found 9 outliers among 100 measurements (9.00%)
+  1 (1.00%) high mild
+  8 (8.00%) high severe
+Benchmarking message_types/encode/AgentDiscover
+Benchmarking message_types/encode/AgentDiscover: Warming up for 3.0000 s
+Benchmarking message_types/encode/AgentDiscover: Collecting 100 samples in estimated 5.0000 s (188M iterations)
+Benchmarking message_types/encode/AgentDiscover: Analyzing
+message_types/encode/AgentDiscover
+                        time:   [26.765 ns 26.882 ns 27.055 ns]
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) high mild
+  6 (6.00%) high severe
+Benchmarking message_types/encode/AgentHeartbeat
+Benchmarking message_types/encode/AgentHeartbeat: Warming up for 3.0000 s
+Benchmarking message_types/encode/AgentHeartbeat: Collecting 100 samples in estimated 5.0001 s (187M iterations)
+Benchmarking message_types/encode/AgentHeartbeat: Analyzing
+message_types/encode/AgentHeartbeat
+                        time:   [26.708 ns 26.748 ns 26.787 ns]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) low mild
+Benchmarking message_types/encode/Call
+Benchmarking message_types/encode/Call: Warming up for 3.0000 s
+Benchmarking message_types/encode/Call: Collecting 100 samples in estimated 5.0001 s (183M iterations)
+Benchmarking message_types/encode/Call: Analyzing
+message_types/encode/Call
+                        time:   [27.245 ns 27.296 ns 27.345 ns]
+Found 4 outliers among 100 measurements (4.00%)
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking message_types/encode/Response
+Benchmarking message_types/encode/Response: Warming up for 3.0000 s
+Benchmarking message_types/encode/Response: Collecting 100 samples in estimated 5.0000 s (184M iterations)
+Benchmarking message_types/encode/Response: Analyzing
+message_types/encode/Response
+                        time:   [27.164 ns 27.415 ns 27.791 ns]
+Found 7 outliers among 100 measurements (7.00%)
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking message_types/encode/Event
+Benchmarking message_types/encode/Event: Warming up for 3.0000 s
+Benchmarking message_types/encode/Event: Collecting 100 samples in estimated 5.0001 s (185M iterations)
+Benchmarking message_types/encode/Event: Analyzing
+message_types/encode/Event
+                        time:   [27.007 ns 27.106 ns 27.228 ns]
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking message_types/encode/StreamOpen
+Benchmarking message_types/encode/StreamOpen: Warming up for 3.0000 s
+Benchmarking message_types/encode/StreamOpen: Collecting 100 samples in estimated 5.0000 s (185M iterations)
+Benchmarking message_types/encode/StreamOpen: Analyzing
+message_types/encode/StreamOpen
+                        time:   [26.853 ns 26.934 ns 27.027 ns]
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+Benchmarking message_types/encode/StreamChunk
+Benchmarking message_types/encode/StreamChunk: Warming up for 3.0000 s
+Benchmarking message_types/encode/StreamChunk: Collecting 100 samples in estimated 5.0000 s (185M iterations)
+Benchmarking message_types/encode/StreamChunk: Analyzing
+message_types/encode/StreamChunk
+                        time:   [27.090 ns 27.150 ns 27.218 ns]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking message_types/encode/StreamClose
+Benchmarking message_types/encode/StreamClose: Warming up for 3.0000 s
+Benchmarking message_types/encode/StreamClose: Collecting 100 samples in estimated 5.0001 s (185M iterations)
+Benchmarking message_types/encode/StreamClose: Analyzing
+message_types/encode/StreamClose
+                        time:   [26.997 ns 27.051 ns 27.113 ns]
+Found 8 outliers among 100 measurements (8.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  2 (2.00%) high severe
+Benchmarking message_types/encode/Ack
+Benchmarking message_types/encode/Ack: Warming up for 3.0000 s
+Benchmarking message_types/encode/Ack: Collecting 100 samples in estimated 5.0001 s (185M iterations)
+Benchmarking message_types/encode/Ack: Analyzing
+message_types/encode/Ack
+                        time:   [26.971 ns 27.121 ns 27.315 ns]
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking message_types/encode/Error
+Benchmarking message_types/encode/Error: Warming up for 3.0000 s
+Benchmarking message_types/encode/Error: Collecting 100 samples in estimated 5.0000 s (185M iterations)
+Benchmarking message_types/encode/Error: Analyzing
+message_types/encode/Error
+                        time:   [27.150 ns 27.360 ns 27.639 ns]
+Found 5 outliers among 100 measurements (5.00%)
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+
