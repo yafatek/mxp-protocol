@@ -240,7 +240,7 @@ impl Frame {
     }
 
     /// Create an ACK frame by encoding the provided structure.
-    #[must_use] 
+    #[must_use]
     pub fn from_ack(frame: &AckFrame) -> Self {
         let mut payload = Vec::new();
         frame.encode(&mut payload);
@@ -248,7 +248,7 @@ impl Frame {
     }
 
     /// Create a stream control frame carrying flow-control credits.
-    #[must_use] 
+    #[must_use]
     pub fn stream_max_data(stream: StreamId, new_limit: u64) -> Self {
         let mut payload = Vec::with_capacity(8 + 8);
         payload.extend_from_slice(&stream.as_u64().to_le_bytes());
@@ -257,7 +257,7 @@ impl Frame {
     }
 
     /// Create a connection-level `MAX_DATA` frame.
-    #[must_use] 
+    #[must_use]
     pub fn connection_max_data(new_limit: u64) -> Self {
         Self::new(
             FrameType::ConnectionMaxData,

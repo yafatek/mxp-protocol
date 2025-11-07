@@ -3,7 +3,7 @@
 //! NOTE: Currently disabled as transport APIs are not fully public yet.
 //! Will be enabled in a future release when transport modules are stabilized.
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 /// Placeholder benchmark - transport benchmarks coming soon
 fn bench_placeholder(c: &mut Criterion) {

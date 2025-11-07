@@ -282,10 +282,12 @@ fn packet_engine_survives_loss_and_reorder() {
             }
         }
 
-        if server.received.len() == messages.len() && client.outbound.is_empty()
-            && client.loss.outstanding().next().is_none() {
-                break;
-            }
+        if server.received.len() == messages.len()
+            && client.outbound.is_empty()
+            && client.loss.outstanding().next().is_none()
+        {
+            break;
+        }
 
         now += Duration::from_millis(5);
     }
