@@ -2,7 +2,7 @@
 //!
 //! Measures encode/decode performance to ensure we meet the <1μs target.
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 use mxp::{Message, MessageType};
 
 /// Benchmark message encoding
@@ -166,4 +166,3 @@ criterion_group!(
 );
 
 criterion_main!(benches);
-

@@ -2,7 +2,7 @@
 //!
 //! Measures transport primitives performance.
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 
 /// Benchmark buffer pool operations
 fn bench_buffer_pool(c: &mut Criterion) {
@@ -126,7 +126,7 @@ fn bench_ack_frame(c: &mut Criterion) {
 
 /// Benchmark crypto operations
 fn bench_crypto(c: &mut Criterion) {
-    use mxp::transport::crypto::{chacha20_poly1305_seal, chacha20_poly1305_open};
+    use mxp::transport::crypto::{chacha20_poly1305_open, chacha20_poly1305_seal};
 
     let mut group = c.benchmark_group("crypto");
 
@@ -139,29 +139,21 @@ fn bench_crypto(c: &mut Criterion) {
         group.throughput(Throughput::Bytes(size as u64));
 
         // Benchmark seal (encrypt)
-        group.bench_with_input(
-            BenchmarkId::new("seal", size),
-            &plaintext,
-            |b, data| {
-                b.iter(|| {
-                    let ciphertext = black_box(chacha20_poly1305_seal(&key, &nonce, data, aad));
-                    black_box(ciphertext);
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("seal", size), &plaintext, |b, data| {
+            b.iter(|| {
+                let ciphertext = black_box(chacha20_poly1305_seal(&key, &nonce, data, aad));
+                black_box(ciphertext);
+            });
+        });
 
         // Benchmark open (decrypt)
         let ciphertext = chacha20_poly1305_seal(&key, &nonce, &plaintext, aad);
-        group.bench_with_input(
-            BenchmarkId::new("open", size),
-            &ciphertext,
-            |b, data| {
-                b.iter(|| {
-                    let plaintext = black_box(chacha20_poly1305_open(&key, &nonce, data, aad).unwrap());
-                    black_box(plaintext);
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("open", size), &ciphertext, |b, data| {
+            b.iter(|| {
+                let plaintext = black_box(chacha20_poly1305_open(&key, &nonce, data, aad).unwrap());
+                black_box(plaintext);
+            });
+        });
     }
 
     group.finish();

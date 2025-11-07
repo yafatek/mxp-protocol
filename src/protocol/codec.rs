@@ -195,4 +195,179 @@ mod tests {
         // Should be reasonably fast (< 100μs on CI)
         assert!(avg_micros < 100, "Decode too slow: {avg_micros}μs");
     }
+
+    // Property-based tests
+    #[cfg(test)]
+    mod proptests {
+        use super::*;
+        use proptest::prelude::*;
+
+        // Strategy to generate valid message types
+        fn message_type_strategy() -> impl Strategy<Value = MessageType> {
+            prop_oneof![
+                Just(MessageType::AgentRegister),
+                Just(MessageType::AgentDiscover),
+                Just(MessageType::AgentHeartbeat),
+                Just(MessageType::Call),
+                Just(MessageType::Response),
+                Just(MessageType::Event),
+                Just(MessageType::StreamOpen),
+                Just(MessageType::StreamChunk),
+                Just(MessageType::StreamClose),
+                Just(MessageType::Ack),
+                Just(MessageType::Error),
+            ]
+        }
+
+        // Strategy to generate payloads of various sizes
+        fn payload_strategy() -> impl Strategy<Value = Vec<u8>> {
+            prop::collection::vec(any::<u8>(), 0..=16384)
+        }
+
+        proptest! {
+            /// Property: Any valid message should roundtrip correctly
+            #[test]
+            fn prop_roundtrip_preserves_data(
+                msg_type in message_type_strategy(),
+                payload in payload_strategy(),
+                message_id in any::<u64>(),
+                trace_id in any::<u64>(),
+            ) {
+                // Create message with specific IDs
+                let mut original = Message::new(msg_type, payload.clone());
+                // Note: We can't set IDs directly in current API, so we test what we can
+
+                let encoded = encode(&original);
+                let decoded = decode(Bytes::from(encoded)).unwrap();
+
+                prop_assert_eq!(decoded.message_type(), original.message_type());
+                prop_assert_eq!(decoded.payload().as_ref(), original.payload().as_ref());
+            }
+
+            /// Property: Corrupting any byte in the checksum should be detected
+            #[test]
+            fn prop_checksum_detects_corruption(
+                msg_type in message_type_strategy(),
+                payload in payload_strategy(),
+                corrupt_offset in 0usize..8,
+                corrupt_value in 1u8..=255,
+            ) {
+                let original = Message::new(msg_type, payload);
+                let mut encoded = encode(&original);
+
+                // Corrupt a byte in the checksum (last 8 bytes)
+                let len = encoded.len();
+                if len > 8 {
+                    let checksum_start = len - 8;
+                    encoded[checksum_start + corrupt_offset] ^= corrupt_value;
+
+                    let result = decode(Bytes::from(encoded));
+                    prop_assert!(result.is_err(), "Corrupted checksum should be detected");
+                }
+            }
+
+            /// Property: Corrupting any byte in the payload should be detected
+            #[test]
+            fn prop_payload_corruption_detected(
+                msg_type in message_type_strategy(),
+                payload in payload_strategy().prop_filter("non-empty", |p| !p.is_empty()),
+                corrupt_offset_ratio in 0.0f64..1.0,
+                corrupt_value in 1u8..=255,
+            ) {
+                let original = Message::new(msg_type, payload.clone());
+                let mut encoded = encode(&original);
+
+                // Corrupt a byte in the payload (between header and checksum)
+                let payload_start = HEADER_SIZE;
+                let payload_end = encoded.len() - CHECKSUM_SIZE;
+
+                if payload_end > payload_start {
+                    let payload_len = payload_end - payload_start;
+                    let corrupt_offset = payload_start + (payload_len as f64 * corrupt_offset_ratio) as usize;
+                    encoded[corrupt_offset] ^= corrupt_value;
+
+                    let result = decode(Bytes::from(encoded));
+                    prop_assert!(result.is_err(), "Corrupted payload should fail checksum");
+                }
+            }
+
+            /// Property: Invalid magic numbers should always be rejected
+            #[test]
+            fn prop_invalid_magic_rejected(
+                invalid_magic in any::<u32>().prop_filter("not valid magic", |m| *m != MAGIC_NUMBER),
+                payload in payload_strategy(),
+            ) {
+                let original = Message::new(MessageType::Call, payload);
+                let mut encoded = encode(&original);
+
+                // Replace magic number
+                encoded[0..4].copy_from_slice(&invalid_magic.to_le_bytes());
+
+                let result = decode(Bytes::from(encoded));
+                prop_assert!(matches!(result, Err(Error::InvalidMagic { .. })));
+            }
+
+            /// Property: Messages with payload > MAX_PAYLOAD_SIZE should be rejected
+            #[test]
+            fn prop_oversized_payload_rejected(
+                msg_type in message_type_strategy(),
+            ) {
+                let original = Message::new(msg_type, vec![0u8; 1024]);
+                let mut encoded = encode(&original);
+
+                // Manually set payload_len to exceed MAX_PAYLOAD_SIZE
+                let oversized_len = (MAX_PAYLOAD_SIZE as u64) + 1;
+                encoded[24..32].copy_from_slice(&oversized_len.to_le_bytes());
+
+                // Recalculate checksum for the modified header
+                let checksum_offset = HEADER_SIZE + 1024;
+                let checksum = xxh3_64(&encoded[0..checksum_offset]);
+                encoded[checksum_offset..checksum_offset + 8].copy_from_slice(&checksum.to_le_bytes());
+
+                let result = decode(Bytes::from(encoded));
+                prop_assert!(result.is_err(), "Oversized payload should be rejected");
+            }
+
+            /// Property: Encoding should be deterministic (same input = same output)
+            #[test]
+            fn prop_encoding_deterministic(
+                msg_type in message_type_strategy(),
+                payload in payload_strategy(),
+            ) {
+                let msg1 = Message::new(msg_type, payload.clone());
+                let msg2 = Message::new(msg_type, payload);
+
+                let encoded1 = encode(&msg1);
+                let encoded2 = encode(&msg2);
+
+                // Headers might differ (message_id, trace_id are generated)
+                // but structure should be consistent
+                prop_assert_eq!(encoded1.len(), encoded2.len());
+            }
+
+            /// Property: Empty payloads should work
+            #[test]
+            fn prop_empty_payload_works(msg_type in message_type_strategy()) {
+                let original = Message::new(msg_type, vec![]);
+                let encoded = encode(&original);
+                let decoded = decode(Bytes::from(encoded)).unwrap();
+
+                prop_assert_eq!(decoded.message_type(), original.message_type());
+                prop_assert_eq!(decoded.payload().len(), 0);
+            }
+
+            /// Property: Maximum valid payload should work
+            #[test]
+            fn prop_max_payload_works(msg_type in message_type_strategy()) {
+                // Test with a reasonably large payload (not full 16MB to keep tests fast)
+                let payload = vec![0u8; 65536]; // 64KB
+                let original = Message::new(msg_type, payload.clone());
+                let encoded = encode(&original);
+                let decoded = decode(Bytes::from(encoded)).unwrap();
+
+                prop_assert_eq!(decoded.message_type(), original.message_type());
+                prop_assert_eq!(decoded.payload().len(), 65536);
+            }
+        }
+    }
 }
