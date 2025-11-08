@@ -411,7 +411,7 @@ See [ROADMAP.md](../ROADMAP.md) for detailed timeline.
 ## Enterprise
 
 For enterprise adoption, design partnerships, and commercial support:
-- **📧 Business Inquiries**: business@relaymxp.xyz
+- **📧 Business Inquiries**: business@mxpnexus.com
 - **📖 Adoption Playbook**: [docs/adoption-playbook.md](../docs/adoption-playbook.md)
 - **🏢 Enterprise Features**: SOC2, ISO 27001, HIPAA compliance available
 

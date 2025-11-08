@@ -1,4 +1,4 @@
-   Compiling mxp v0.1.0 (/Users/feras/Downloads/code/rust/relay/mxp-protocol)
+   Compiling mxp v0.1.0 (/Users/feras/Downloads/code/rust/mxpnexus/mxp-protocol)
     Finished `bench` profile [optimized] target(s) in 8.92s
      Running benches/codec.rs (target/release/deps/codec-66cf6dc58a7a2935)
 Gnuplot not found, using plotters backend

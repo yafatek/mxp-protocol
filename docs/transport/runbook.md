@@ -4,7 +4,7 @@
 
 - **Build Flags**: Ensure release builds use `--features debug-tools` only in staging when packet capture is required; production builds stay feature-less.
 - **Configuration**: Verify `TransportConfig` limits (buffers, timeouts, flow windows) match deployment sizing guidelines.
-- **Metrics Export**: Confirm relay runtime scrapes MXP transport counters (connection/stream totals, flow, scheduler, datagram statistics) every 5 s.
+- **Metrics Export**: Confirm mxpnexus runtime scrapes MXP transport counters (connection/stream totals, flow, scheduler, datagram statistics) every 5 s.
 - **Tracing Level**: Default to `info` in production; elevate to `debug` for targeted investigations.
 
 ## 2. Monitoring & Alerting

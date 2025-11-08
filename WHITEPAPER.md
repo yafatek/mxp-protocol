@@ -21,7 +21,7 @@ As AI agents become increasingly autonomous and interconnected, the protocols th
 - **Built-in distributed tracing** (no external instrumentation required)
 - **Native streaming support** (optimized for LLM token streams)
 
-MXP is implemented in **Relay**, a production-ready Rust reference implementation that includes a complete agent runtime, control plane, and SDK ecosystem. The protocol specification is public domain (CC0), enabling anyone to implement MXP in any language without restrictions.
+MXP is implemented in **MXP Nexus**, a production-ready Rust reference implementation that includes a complete agent runtime, control plane, and SDK ecosystem. The protocol specification is public domain (CC0), enabling anyone to implement MXP in any language without restrictions.
 
 This whitepaper presents the technical design, performance characteristics, security model, and ecosystem of MXP as a foundation for the next generation of distributed AI systems.
 
@@ -586,17 +586,17 @@ scheduler_priority_class{class="Control|Interactive|Bulk"}
 #### 7.3.1 Deployment
 
 ```bash
-# 1. Install Relay
-cargo install relay-cli
+# 1. Install MXP Nexus
+cargo install mxpnexus-cli
 
 # 2. Initialize configuration
-relay init --config /etc/relay/config.toml
+mxpnexus init --config /etc/mxpnexus/config.toml
 
-# 3. Start relay node
-relay start --bind 0.0.0.0:9000
+# 3. Start mxpnexus node
+mxpnexus start --bind 0.0.0.0:9000
 
 # 4. Register agent
-relay agent register \
+mxpnexus agent register \
   --name "my-agent" \
   --capabilities "search,summarize" \
   --endpoint "mxp://10.0.1.5:9000"
@@ -606,26 +606,26 @@ relay agent register \
 
 ```bash
 # Check connection status
-relay status
+mxpnexus status
 
 # View metrics
 curl http://localhost:9090/metrics
 
 # Tail logs
-relay logs --follow --level info
+mxpnexus logs --follow --level info
 ```
 
 #### 7.3.3 Troubleshooting
 
 ```bash
 # Enable debug logging
-relay config set log.level debug
+mxpnexus config set log.level debug
 
 # Capture packets (debug mode only)
-relay debug capture --output packets.pcap
+mxpnexus debug capture --output packets.pcap
 
 # Analyze latency
-relay debug latency --percentiles 50,90,99
+mxpnexus debug latency --percentiles 50,90,99
 ```
 
 ### 7.4 Alerting Strategy
@@ -645,12 +645,12 @@ relay debug latency --percentiles 50,90,99
 
 ## 8. Implementation & Ecosystem
 
-### 8.1 Reference Implementation: Relay
+### 8.1 Reference Implementation: MXP Nexus
 
-**Relay** is the production-ready Rust implementation of MXP:
+**MXP Nexus** is the production-ready Rust implementation of MXP:
 
 ```
-relay/
+mxpnexus/
 ├── mxp-protocol/          # Core protocol implementation
 │   ├── src/protocol/      # Message encoding/decoding
 │   └── src/transport/     # Custom UDP transport
@@ -658,7 +658,7 @@ relay/
 │   ├── kernel/            # Agent lifecycle management
 │   ├── adapters/          # Integration adapters
 │   └── telemetry/         # Observability hooks
-└── relay/                 # Control plane
+└── mxpnexus/                 # Control plane
     ├── registry/          # Agent registry
     ├── policy/            # Policy enforcement
     └── observability/     # Metrics & tracing
@@ -669,7 +669,7 @@ relay/
 #### 8.2.1 Rust SDK (Production-Ready)
 
 ```rust
-use relay_sdk::{Agent, AgentConfig, Message};
+use mxpnexus_sdk::{Agent, AgentConfig, Message};
 
 #[tokio::main]
 async fn main() {
@@ -691,7 +691,7 @@ async fn main() {
 #### 8.2.2 JavaScript SDK (Beta)
 
 ```javascript
-import { Agent } from '@relay/mxp';
+import { Agent } from '@mxpnexus/mxp';
 
 const agent = new Agent({
   name: 'my-agent',
@@ -709,7 +709,7 @@ await agent.run();
 #### 8.2.3 Python SDK (Planned Q2 2026)
 
 ```python
-from relay_mxp import Agent
+from mxpnexus_mxp import Agent
 
 agent = Agent(
     name="my-agent",
@@ -726,7 +726,7 @@ await agent.run()
 
 ### 8.3 Control Plane
 
-Relay includes a **production-grade control plane**:
+MXP Nexus includes a **production-grade control plane**:
 
 ```
 Control Plane Components:
@@ -739,7 +739,7 @@ Control Plane Components:
 
 ### 8.4 Integration Adapters
 
-Relay provides **pre-built adapters** for enterprise systems:
+MXP Nexus provides **pre-built adapters** for enterprise systems:
 
 ```
 Adapters:
@@ -1023,7 +1023,7 @@ MXP represents a fundamental rethinking of how AI agents communicate. By designi
 - **Built-in observability** without external instrumentation
 - **Native streaming support** for LLM token streams
 - **Explicit agent lifecycle management** (register, discover, heartbeat)
-- **Production-ready implementation** (Relay in Rust)
+- **Production-ready implementation** (MXP Nexus runtime in Rust)
 
 As AI agents become increasingly autonomous and interconnected, the protocols they use to communicate will become critical infrastructure. MXP provides a solid foundation for the next generation of distributed AI systems.
 
@@ -1035,7 +1035,7 @@ As AI agents become increasingly autonomous and interconnected, the protocols th
 - Contribute to the ecosystem: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 **For Enterprises:**
-- Join the design partnership program: business@relaymxp.xyz
+- Join the design partnership program: business@mxpnexus.com
 - Deploy a pilot: [Adoption Playbook](docs/adoption-playbook.md)
 - Request a demo: [getmxp.xyz](https://getmxp.xyz)
 
@@ -1075,7 +1075,7 @@ As AI agents become increasingly autonomous and interconnected, the protocols th
 
 ### MXP Resources
 1. **Protocol Specification**: [SPEC.md](SPEC.md)
-2. **Relay Documentation**: [docs.relaymxp.xyz](https://docs.relaymxp.xyz)
+2. **MXP Nexus Documentation**: [docs.mxpnexus.com](https://docs.mxpnexus.com)
 3. **API Reference**: [docs.rs/mxp](https://docs.rs/mxp)
 4. **Examples**: [examples/](examples/)
 

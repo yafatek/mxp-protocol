@@ -30,7 +30,7 @@ This document defines the measurable performance, security, and documentation ob
 
 | Category | Requirement | Notes |
 |----------|-------------|-------|
-| Mutual authentication | Mandatory for server; optional client with policy control | Certificates issued by Relay CA or customer CA |
+| Mutual authentication | Mandatory for server; optional client with policy control | Certificates issued by MXP Nexus CA or customer CA |
 | Forward secrecy | X25519 ephemeral keys per session | Rekey every 10,000 packets or 60 seconds |
 | Cipher suites | Default: X25519 + ChaCha20-Poly1305; Alt: P-256 + AES-256-GCM | Configurable via policy |
 | Replay protection | Nonce tracking + ticket binding | 0-RTT tickets limited to 30 seconds |
@@ -72,7 +72,7 @@ All documents must:
 1. Performance benchmarks meet or exceed all targets in §1.
 2. Security validation checklist completed with no critical findings.
 3. Documentation suite up to date, including test evidence and operational guidance.
-4. Integration tests with `relay` platform and `rust-deep-agents-sdk` green for 14 consecutive days.
+4. Integration tests with `mxpnexus` platform and `rust-deep-agents-sdk` green for 14 consecutive days.
 5. Canary deployments in internal clusters for at least two weeks with telemetry review.
 6. Rollback plan ready (document legacy QUIC branch for archival reference).
 

@@ -77,7 +77,7 @@ Each packet payload carries frames aligned to 8 bytes to preserve zero-copy sema
 ## 6. Handshake & Session Lifecycle
 
 - **Pattern:** Noise IK with static server key, optional client static; ephemeral X25519 key exchange.
-- **Authentication:** Server proves identity via MXP certificate signed by Relay CA; client optional.
+- **Authentication:** Server proves identity via MXP certificate signed by MXP Nexus CA; client optional.
 - **Session Keys:** Derived via HKDF → AEAD (ChaCha20-Poly1305 default, AES-GCM alternative).
 - **Replay Defense:** Nonces + ticket binding to client IP/ConnID; anti-amplification limit before authentication.
 - **0-RTT Resume:** Stateless tickets containing resumption secrets, bounded lifetime, replay window tracking.
@@ -141,7 +141,7 @@ Detailed milestones and ownership to be tracked in `docs/transport/plan.md` (to 
 - Finalize cipher suite list and compliance requirements (FIPS?).
 - Determine hardware acceleration roadmap (AES-NI, io_uring, DPDK).
 - Define behavior under severe packet reordering (≥ 5 out-of-order).
-- Align handshake with Relay platform identity/attestation model.
+- Align handshake with MXP Nexus platform identity/attestation model.
 - Coordinate with SDK for stream/dgram APIs.
 
 Next deliverables:

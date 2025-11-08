@@ -4,7 +4,7 @@
 Deliver a bespoke transport layer tailored for MXP agent communication that:
 - Achieves sub-millisecond latency and million-msg/sec throughput per connection.
 - Provides enterprise-grade security (mutual auth, forward secrecy, replay defense).
-- Integrates seamlessly with Relay platform and rust-deep-agents-sdk.
+- Integrates seamlessly with MXP Nexus platform and rust-deep-agents-sdk.
 - Operates with zero external dependencies (pure Rust implementation).
 
 ## 2. Stakeholders
@@ -60,7 +60,7 @@ Deliver a bespoke transport layer tailored for MXP agent communication that:
 ## 7. Dependencies
 - Architecture, target, plan, and test documents (already drafted).
 - Internal tooling for fuzzing/perf (implemented in-house).
-- Coordination with platform/SDK teams for rollout logistics.
+- Coordination with mxpnexus/SDK teams for rollout logistics.
 
 ## 8. Release Phases
 1. **Alpha (internal):** Feature flag disabled by default; developers exercise API.

@@ -4,14 +4,14 @@
 
 | Crate / Module | Scope | Owner (initial) | Notes |
 |----------------|-------|-----------------|-------|
-| `relay-transport-core` | Socket driver, packet structs, buffer pools, timers | Transport team | Native implementation |
-| `relay-transport-crypto` | Noise handshake, key schedule, AEAD wrappers | Crypto specialist | Re-exports hardened primitives only |
-| `relay-transport-reliability` | ACK ranges, loss detection, congestion control | Networking engineer | Configurable algorithms (BBR-like, CUBIC fallback) |
-| `relay-transport-stream` | Reliable stream state machines and buffers | Transport team | Implemented in `stream.rs` |
-| `relay-transport-flow` | Connection/stream flow-control accounting | Transport team | `flow.rs` (in progress) |
-| `relay-transport-scheduler` | Stream/dgram queues, priority logic, flow control | Protocol engineer | Initial WFQ scheduler in `scheduler.rs`; integration ongoing |
-| `relay-transport-api` | Public Rust API exposing connections/streams | SDK interface lead | Defines MXP-native API surface |
-| `relay-transport-tests` | Shared fixtures, fuzz harnesses, integration harness | QA/Infra | Lives under `tests/` with custom runner |
+| `mxpnexus-transport-core` | Socket driver, packet structs, buffer pools, timers | Transport team | Native implementation |
+| `mxpnexus-transport-crypto` | Noise handshake, key schedule, AEAD wrappers | Crypto specialist | Re-exports hardened primitives only |
+| `mxpnexus-transport-reliability` | ACK ranges, loss detection, congestion control | Networking engineer | Configurable algorithms (BBR-like, CUBIC fallback) |
+| `mxpnexus-transport-stream` | Reliable stream state machines and buffers | Transport team | Implemented in `stream.rs` |
+| `mxpnexus-transport-flow` | Connection/stream flow-control accounting | Transport team | `flow.rs` (in progress) |
+| `mxpnexus-transport-scheduler` | Stream/dgram queues, priority logic, flow control | Protocol engineer | Initial WFQ scheduler in `scheduler.rs`; integration ongoing |
+| `mxpnexus-transport-api` | Public Rust API exposing connections/streams | SDK interface lead | Defines MXP-native API surface |
+| `mxpnexus-transport-tests` | Shared fixtures, fuzz harnesses, integration harness | QA/Infra | Lives under `tests/` with custom runner |
 
 All crates live under `mxp-protocol/transport/` with internal dependencies only. No external runtime or benchmarking crates are permitted; bespoke tooling will be written in-house.
 
@@ -85,7 +85,7 @@ Each milestone maps to specific entries in `docs/transport/test-plan.md` (to be 
 
 ## 6. Coordination Points
 
-- **Relay platform team:** Align on deployment mechanics, rollout controls, metrics ingestion.
+- **MXP Nexus platform team:** Align on deployment mechanics, rollout controls, metrics ingestion.
 - **rust-deep-agents-sdk:** Mirror API adjustments; provide compatibility shims.
 - **DevOps/Infra:** Provision perf test clusters, network emulation environments, observability dashboards.
 - **Security team:** Schedule audits, track fixes.

@@ -59,7 +59,7 @@ Implement lightweight fuzz harness using in-house mutation engine (no external l
 
 ### Platform Integration
 - Swap custom transport under MXP message layer; run existing protocol integration tests to ensure compatibility.
-- Relay platform integration: ensure control plane operations (agent register/discover) behave identically.
+- MXP Nexus platform integration: ensure control plane operations (agent register/discover) behave identically.
 
 ## 6. Soak Tests
 
@@ -99,7 +99,7 @@ Maintain `docs/transport/test-matrix.csv` (to be added) listing each test case, 
 
 ## 11. Tooling & Infrastructure
 
-- Custom harness crate (`relay-transport-tests`) provides shared utilities.
+- Custom harness crate (`mxpnexus-transport-tests`) provides shared utilities.
 - CI matrix executes unit + integration tests on Linux/macOS nightly; fuzz/perf run separately.
 - Manual approval required before merging code that skips tests.
 

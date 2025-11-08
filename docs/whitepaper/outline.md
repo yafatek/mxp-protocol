@@ -12,7 +12,7 @@
 
 ## 3. MXP Overview
 - Protocol stack: MXP header, message types, tracing and telemetry support.
-- Relationship between MXP core, transport, and Relay platform.
+- Relationship between MXP core, transport, and MXP Nexus platform.
 - Open-source foundation with enterprise-grade roadmap.
 
 ## 4. Transport Architecture
@@ -39,7 +39,7 @@
 - Monitoring targets and alerting strategy.
 
 ## 8. Integration & Ecosystem
-- Relay platform: deployment, management, policy enforcement.
+- MXP Nexus platform: deployment, management, policy enforcement.
 - `rust-deep-agents-sdk`: agent lifecycle, API contracts, dev experience.
 - Compatibility with cloud providers (AWS, GCP, Azure) and on-prem setups.
 - Extensibility hooks for partner integrations.
