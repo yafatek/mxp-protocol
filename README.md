@@ -33,6 +33,10 @@ AI agents are evolving from isolated assistants to interconnected systems that c
 - **Zero-Copy Design** - Efficient memory usage with `bytes::Bytes` for payload handling
 - **Native Streaming** - First-class support for streaming data (e.g., LLM token streams)
 
+### Browser Support
+
+MXP keeps the `mxp://` addressing model intact even inside browsers. The JavaScript SDK negotiates a **WebRTC DataChannel** connection with the MXP Gateway, which relays packets onto the native MXP transport without mutating headers or trace identifiers. A TLS WebSocket fallback is available for restrictive networks, and native WebTransport support will be enabled once it is broadly available across Chrome, Firefox, and Safari.
+
 ## Protocol Specification
 
 See [SPEC.md](SPEC.md) for the complete wire format specification.

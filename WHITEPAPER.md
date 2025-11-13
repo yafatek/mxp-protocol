@@ -370,6 +370,30 @@ Allocation Strategy:  Pre-allocated, reusable
 Zero-Copy Slicing:    Uses bytes::Bytes for shared ownership
 ```
 
+### 4.6 Browser Interoperability via WebRTC
+
+While MXP is designed for native UDP transports, modern browsers do not expose raw UDP sockets. To preserve the MXP address scheme (`mxp://host:port`) without compromising on latency, MXP Nexus provides a **WebRTC gateway** that terminates WebRTC DataChannel sessions and forwards the resulting MXP packets over the native transport.
+
+```
+Browser (WebRTC DataChannel)
+        │
+        │  SDP + ICE negotiation
+        ▼
+MXP Gateway (Rust)
+        │  Native MXP transport (UDP)
+        ▼
+MXP Mesh (Agents & Registry)
+```
+
+Key properties:
+
+- **Single hop**: MXP packets are decoded/encoded once at the gateway before being forwarded to the mesh.
+- **Preserved semantics**: The browser SDK exposes the same request/response and streaming APIs; only the transport binding differs.
+- **Fallback hierarchy**: WebRTC DataChannel (default) → WebSocket framing (legacy environments) → WebTransport (future native UDP once broadly available).
+- **Zero-copy relay**: The gateway reuses MXP buffer pools to avoid additional allocations when bridging browser traffic.
+
+This design keeps MXP a first-class protocol while accommodating platform limitations in a way that is transparent to developers.
+
 ---
 
 ## 5. Security Model
@@ -656,12 +680,13 @@ mxpnexus/
 │   └── src/transport/     # Custom UDP transport
 ├── agents-runtime-sdk/    # Agent runtime and SDK
 │   ├── kernel/            # Agent lifecycle management
-│   ├── adapters/          # Integration adapters
+│   ├── patterns/          # MXP-native routing/adapter traits
 │   └── telemetry/         # Observability hooks
-└── mxpnexus/                 # Control plane
-    ├── registry/          # Agent registry
-    ├── policy/            # Policy enforcement
-    └── observability/     # Metrics & tracing
+└── platform/
+    ├── registry/          # Agent registry (MXP transport)
+    ├── gateway/           # WebRTC/WebSocket bridge for browsers
+    ├── cli/               # Operator tooling
+    └── policy/            # Capability governance (roadmap)
 ```
 
 ### 8.2 SDK Ecosystem
@@ -688,23 +713,27 @@ async fn main() {
 }
 ```
 
-#### 8.2.2 JavaScript SDK (Beta)
+#### 8.2.2 JavaScript SDK (Design Candidate)
 
-```javascript
-import { Agent } from '@mxpnexus/mxp';
+The JavaScript SDK targets both **Node.js** (native UDP sockets) and **browsers** (WebRTC DataChannel). The API mirrors the Rust runtime while abstracting over transport selection:
 
-const agent = new Agent({
-  name: 'my-agent',
-  capabilities: ['search'],
+```typescript
+import { MXPClient } from '@mxpnexus/mxp';
+
+const client = new MXPClient({
+  endpoint: 'mxp://mesh.mxpnexus.local:9000',
+  transport: 'auto', // Node: UDP, Browser: WebRTC → Gateway
 });
 
-agent.onCall(async (msg) => {
-  // Handle incoming call
-  return Buffer.from('response');
-});
+await client.connect();
 
-await agent.run();
+client.onCall(async (message) => {
+  // Handle incoming call from another agent
+  return new Uint8Array(Buffer.from('response'));
+});
 ```
+
+Browser sessions negotiate a WebRTC connection with the MXP gateway. Once established, MXP messages flow unmodified across the mesh. Node.js clients speak native MXP over UDP without the gateway hop.
 
 #### 8.2.3 Python SDK (Planned Q2 2026)
 
@@ -737,19 +766,20 @@ Control Plane Components:
 └── Configuration       # Distributed config
 ```
 
-### 8.4 Integration Adapters
+### 8.4 MXP-Native Adapter Patterns
 
-MXP Nexus provides **pre-built adapters** for enterprise systems:
+Rather than protocol bridges, MXP focuses on **message-level patterns** that remain entirely within the MXP ecosystem:
 
 ```
-Adapters:
-├── Salesforce          # CRM integration
-├── Jira                # Workflow automation
-├── ServiceNow          # ITSM integration
-├── SAP                 # ERP integration
-├── Slack               # Notifications
-└── PagerDuty           # Incident management
+Adapter Patterns:
+├── Router            # Route MXP messages based on capability/tags
+├── Aggregator        # Combine multiple MXP responses into one
+├── Transformer       # Mutate payloads while preserving headers/trace IDs
+├── Broadcaster       # Fan-out events to multiple downstream agents
+└── Sentinel          # Observe, rate-limit, or quarantine MXP traffic
 ```
+
+These patterns are implemented as Rust traits (`InputAdapter`, `OutputAdapter`, `MessageRouter`) and are reused across agents (e.g., gateways, policy enforcers, stream processors) without relying on legacy protocols.
 
 ---
 
@@ -951,35 +981,40 @@ IoT Sensors → Edge Aggregator (MXP StreamChunk)
 
 **MXP v0.2 - Foundation Hardening**
 - Transport conformance suite
+- Property-based tests for protocol invariants
 - Benchmarks vs HTTP/gRPC baselines
-- Property-based tests for protocol
 - Updated security model documentation
 
-**Runtime v0.3 - Deterministic Agents**
-- Governance hooks (policy observers, audit)
-- Memory bus integrations
-- End-to-end error handling examples
+**Runtime v0.3 - Mesh Patterns**
+- Adapter traits for routers/aggregators/transformers
+- Gateway-ready runtime helpers (stream fan-out, buffering)
 - Lifecycle diagrams and tool registry docs
+- Deterministic error handling examples
+
+**JS SDK Alpha (Node)**
+- TypeScript codec with zero-copy buffers
+- Native UDP transport for Node.js
+- Shared test harness with Rust implementation
+- CLI ping/pong and stream demos
 
 ### 11.2 Mid-Term (Q2 2026 - Q3 2026)
 
-**Platform Alpha - Control Plane + CLI**
-- CLI for register/deploy/observe agents
-- Control plane (policy API, registry, audit)
-- OpenTelemetry traces & Prometheus metrics
-- Platform architecture documentation
+**Browser Gateway Beta**
+- WebRTC DataChannel gateway service (Rust)
+- Automatic transport negotiation (WebRTC → MXP)
+- Observability and tracing for bridged sessions
+- Reference deployments (Kind + cloud)
 
-**JS SDK Beta - Browser & Node Support**
-- TypeScript codec with zero-copy buffers
-- Node UDP + WebTransport support
-- API parity with Rust runtime
-- Browser-to-agent example apps
+**JS SDK Beta (Browser + Node)**
+- Unified API surface with transport auto-selection
+- Browser dashboard example streaming MXP events
+- Token-based auth enrollment via gateway
+- Documentation & TypeDoc site
 
-**Platform Beta - Enterprise Readiness**
-- AuthN/Z with mTLS and capability scopes
-- Helm chart & Terraform modules
-- Integration adapters (Salesforce, Jira)
-- Audit dashboards and alerting
+**Control Plane Enhancements**
+- Policy observers & capability scopes
+- CLI workflows for gateway lifecycle
+- Prometheus + OpenTelemetry integration
 
 ### 11.3 Long-Term (Q4 2026+)
 
@@ -990,8 +1025,8 @@ IoT Sensors → Edge Aggregator (MXP StreamChunk)
 - Published case studies and benchmarks
 
 **v2.0 - Advanced Features**
+- Native WebTransport support (browser, no gateway)
 - WebAssembly agent runtime
-- Browser support via WebTransport
 - Cross-mesh federation
 - Post-quantum cryptography
 - Hardware acceleration (DPDK, io_uring)
